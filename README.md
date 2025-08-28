@@ -61,7 +61,7 @@ cd nodejs-microservices
 
 2. **Start All Services**
 
-docker-compose up --build
+```docker-compose up --build```
 
 This will:
 
