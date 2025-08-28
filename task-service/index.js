@@ -4,7 +4,7 @@ const bodyParser = require("body-parser");
 const amqp = require("amqplib");
 
 const app = express();
-const port = process.env.PORT || 3002;
+const port = process.env.PORT || 3003;
 
 app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -46,11 +46,11 @@ async function connectToRabbitMQ(retries = 5, delay = 5000) {
   }
 }
 
-app.get("/", (req, res) => {
+app.get("/test", (req, res) => {
   res.send("Task Service is running");
 });
 
-app.post("/tasks", async (req, res) => {
+app.post("/", async (req, res) => {
   const { title, description, userId } = req.body;
 
   const task = new Task({
@@ -76,7 +76,7 @@ app.post("/tasks", async (req, res) => {
   }
 });
 
-app.get("/tasks", async (req, res) => {
+app.get("/", async (req, res) => {
   try {
     const tasks = await Task.find();
     res.json(tasks);
