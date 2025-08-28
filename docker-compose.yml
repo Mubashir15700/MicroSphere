@@ -14,6 +14,18 @@ services:
       - "5672:5672" # RabbitMQ server
       - "15672:15672" # Management UI
 
+  api-gateway:
+    build: ./api-gateway
+    container_name: api-gateway
+    ports:
+      - "3000:3000"
+    depends_on:
+      - user-service
+      - task-service
+    volumes:
+      - ./api-gateway:/app
+      - /app/node_modules
+
   auth-service:
     build: ./auth-service
     container_name: auth-service
@@ -21,6 +33,9 @@ services:
       - "3001:3001"
     depends_on:
       - user-service
+    volumes:
+      - ./auth-service:/app
+      - /app/node_modules
 
   user-service:
     build: ./user-service
@@ -29,6 +44,9 @@ services:
       - "3002:3002"
     depends_on:
       - mongo
+    volumes:
+      - ./user-service:/app
+      - /app/node_modules
 
   task-service:
     build: ./task-service
@@ -38,6 +56,9 @@ services:
     depends_on:
       - mongo
       - rabbitmq
+    volumes:
+      - ./task-service:/app
+      - /app/node_modules
 
   notification-service:
     build: ./notification-service
@@ -47,15 +68,9 @@ services:
     depends_on:
       - mongo
       - rabbitmq
-
-  api-gateway:
-    build: ./api-gateway
-    container_name: api-gateway
-    ports:
-      - "3000:3000"
-    depends_on:
-      - user-service
-      - task-service
+    volumes:
+      - ./notification-service:/app
+      - /app/node_modules
 
 volumes:
   mongo-data:

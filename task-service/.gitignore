@@ -1,0 +1,18 @@
+# Node dependencies
+node_modules/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Env files
+.env
+
+# Build files
+dist/
+coverage/
+
+# OS & Editor files
+.DS_Store
+*.swp
