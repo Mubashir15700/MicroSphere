@@ -1,18 +1,19 @@
-const express = require("express");
-const axios = require("axios");
-const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
+import dotenv from "dotenv";
+import express, { NextFunction, Request, Response } from "express";
+import axios from "axios";
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
+
+dotenv.config();
 
 const app = express();
-const port = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3001;
+const JWT_SECRET = process.env.JWT_SECRET || "jwt_secret_key";
+const USER_SERVICE_URL = "http://user-service:3002";
 
 app.use(express.json());
 
-const USER_SERVICE_URL = "http://user-service:3002";
-
-const JWT_SECRET = process.env.JWT_SECRET || "jwt_secret_key";
-
-app.post("/register", async (req, res) => {
+app.post("/register", async (req: Request, res: Response) => {
   const { name, email, password } = req.body;
 
   if (!email || !password || !name) {
@@ -37,7 +38,7 @@ app.post("/register", async (req, res) => {
     });
 
     res.status(201).json({ token });
-  } catch (error) {
+  } catch (error: any) {
     if (error.response && error.response.status === 400) {
       return res
         .status(400)
@@ -47,7 +48,7 @@ app.post("/register", async (req, res) => {
   }
 });
 
-app.post("/login", async (req, res) => {
+app.post("/login", async (req: Request, res: Response) => {
   const { email, password } = req.body;
 
   if (!email || !password)
@@ -67,7 +68,7 @@ app.post("/login", async (req, res) => {
     });
 
     res.json({ token });
-  } catch (error) {
+  } catch (error: any) {
     if (error.response && error.response.status === 404) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
@@ -75,6 +76,14 @@ app.post("/login", async (req, res) => {
   }
 });
 
-app.listen(port, () => {
-  console.log(`Auth service listening on port ${port}`);
+app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+  console.error("Unhandled error:", err);
+  res.status(err.status || 500).json({
+    error: true,
+    message: err.message || "Internal Server Error",
+  });
+});
+
+app.listen(PORT, () => {
+  console.log(`Auth service listening on port ${PORT}`);
 });

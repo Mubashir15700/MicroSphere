@@ -1,13 +1,24 @@
-const express = require("express");
-const { createProxyMiddleware } = require("http-proxy-middleware");
-const jwt = require("jsonwebtoken");
+import dotenv from "dotenv";
+import express, { Request, Response, NextFunction } from "express";
+import cors from "cors";
+import { createProxyMiddleware } from "http-proxy-middleware";
+import jwt, { JwtPayload } from "jsonwebtoken";
+
+dotenv.config();
 
 const app = express();
-const port = process.env.PORT || 3000;
-
+const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || "jwt_secret_key";
 
-function verifyToken(req, res, next) {
+interface AuthenticatedRequest extends Request {
+  user?: string | JwtPayload;
+}
+
+function verifyToken(
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+) {
   const authHeader = req.headers["authorization"];
   if (!authHeader) {
     return res.status(401).json({ message: "Authorization header missing" });
@@ -27,6 +38,13 @@ function verifyToken(req, res, next) {
     next();
   });
 }
+
+app.use(
+  cors({
+    origin: "*",
+    methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+  })
+);
 
 app.use(
   "/auth",
@@ -54,6 +72,16 @@ app.use(
   })
 );
 
-app.listen(port, () => {
-  console.log(`API Gateway listening on port ${port}`);
+app.use(
+  (err: any, req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    console.error("Unhandled error:", err);
+    res.status(err.status || 500).json({
+      error: true,
+      message: err.message || "Internal Server Error",
+    });
+  }
+);
+
+app.listen(PORT, () => {
+  console.log(`API Gateway listening on port ${PORT}`);
 });
