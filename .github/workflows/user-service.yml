@@ -1,0 +1,34 @@
+name: User Service CI
+
+on:
+  push:
+    paths:
+      - "user-service/**"
+  pull_request:
+    paths:
+      - "user-service/**"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: user-service
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        env:
+          MONGO_URI: ${{ secrets.MONGO_URI }}
+        run: npm test
