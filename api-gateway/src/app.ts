@@ -18,7 +18,7 @@ const stream = {
 
 app.use(morgan("combined", { stream }));
 
-app.use(helmet());
+// app.use(helmet());
 
 app.use(rateLimit(rateLimitConfig));
 
