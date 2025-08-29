@@ -1,15 +1,12 @@
 import { Router, Request, Response } from "express";
 import { Task } from "../models/taskModel";
 import { getChannel, getQueueName } from "../services/rabbitmqService";
+import { verifyToken } from "../middlewares/authMiddleware";
 import { logger } from "../utils/logger";
 
 const router = Router();
 
-router.get("/test", (_req: Request, res: Response) => {
-  res.send("Task Service is running");
-});
-
-router.post("/", async (req: Request, res: Response) => {
+router.post("/", verifyToken, async (req: Request, res: Response) => {
   const { title, description, userId } = req.body;
 
   try {
@@ -29,7 +26,7 @@ router.post("/", async (req: Request, res: Response) => {
   }
 });
 
-router.get("/", async (_req: Request, res: Response) => {
+router.get("/", verifyToken, async (_req: Request, res: Response) => {
   try {
     const tasks = await Task.find();
     res.json(tasks);

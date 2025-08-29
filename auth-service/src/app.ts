@@ -12,7 +12,11 @@ app.use((req: Request, _res: Response, next: NextFunction) => {
   next();
 });
 
-app.use(authRoutes);
+app.use("/", authRoutes);
+
+app.use((_req: Request, res: Response) => {
+  res.status(404).json({ message: "Route not found" });
+});
 
 app.use(errorHandler);
 

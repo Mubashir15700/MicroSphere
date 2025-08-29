@@ -7,7 +7,7 @@ const logFormat = printf(({ level, message, timestamp, stack }) => {
 });
 
 export const logger = createLogger({
-  level: "info",
+  level: "http",
   format: combine(
     colorize(), // Add color to logs
     timestamp(), // Add timestamp

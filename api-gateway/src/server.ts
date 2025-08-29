@@ -6,13 +6,15 @@ const server = app.listen(PORT, () => {
   logger.info(`API Gateway listening on port ${PORT}`);
 });
 
-process.on("SIGINT", () => {
-  logger.info("SIGINT received. Shutting down gracefully...");
-  server.close(() => {
-    logger.info("Server closed.");
-    process.exit(0);
-  });
-});
+["SIGINT", "SIGTERM"].forEach((signal) =>
+  process.on(signal, async () => {
+    logger.info(`${signal} received. Shutting down gracefully...`);
+    server.close(() => {
+      logger.info("Server closed.");
+      process.exit(0);
+    });
+  })
+);
 
 // Optional: Handle unexpected crashes
 process.on("unhandledRejection", (reason) => {

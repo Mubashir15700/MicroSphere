@@ -1,5 +1,6 @@
 import { Router, Request, Response } from "express";
 import { User } from "../models/userModel";
+import { verifyToken } from "../middlewares/authMiddleware";
 
 const router = Router();
 
@@ -15,18 +16,21 @@ router.post("/users", async (req: Request, res: Response) => {
 });
 
 // Get user by email (used by auth-service)
-router.get("/users/email/:email", async (req: Request, res: Response) => {
-  try {
-    const user = await User.findOne({ email: req.params.email });
-    if (!user) return res.status(404).json({ message: "User not found" });
-    res.json(user);
-  } catch (error: any) {
-    res.status(500).json({ message: error.message || "Error fetching user" });
+router.get(
+  "/users/email/:email",
+  async (req: Request, res: Response) => {
+    try {
+      const user = await User.findOne({ email: req.params.email });
+      if (!user) return res.status(404).json({ message: "User not found" });
+      res.json(user);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message || "Error fetching user" });
+    }
   }
-});
+);
 
 // Get all users (exclude passwords)
-router.get("/", async (_req: Request, res: Response) => {
+router.get("/", verifyToken, async (_req: Request, res: Response) => {
   try {
     const users = await User.find().select("-password");
     res.json(users);
@@ -36,7 +40,7 @@ router.get("/", async (_req: Request, res: Response) => {
 });
 
 // Get user by ID (exclude password)
-router.get("/:id", async (req: Request, res: Response) => {
+router.get("/:id", verifyToken, async (req: Request, res: Response) => {
   try {
     const user = await User.findById(req.params.id).select("-password");
     if (!user) return res.status(404).json({ message: "User not found" });
