@@ -19,7 +19,7 @@ export const register = async (req: Request, res: Response) => {
     const user = await createUser({ name, email, password: hashedPassword });
 
     const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, {
-      expiresIn: "1h",
+      expiresIn: "7h",
     });
 
     res.status(201).json({ token });
@@ -46,7 +46,7 @@ export const login = async (req: Request, res: Response) => {
     if (!match) return res.status(401).json({ message: "Invalid credentials" });
 
     const token = jwt.sign({ id: user._id, email: user.email }, JWT_SECRET, {
-      expiresIn: "1h",
+      expiresIn: "7h",
     });
 
     res.json({ token });
