@@ -1,6 +1,7 @@
 import { Router, Request, Response } from "express";
 import { Task } from "../models/taskModel";
 import { getChannel, getQueueName } from "../services/rabbitmqService";
+import { logger } from "../utils/logger";
 
 const router = Router();
 
@@ -20,7 +21,7 @@ router.post("/", async (req: Request, res: Response) => {
       getQueueName(),
       Buffer.from(JSON.stringify({ taskId: task._id, userId }))
     );
-    console.log("Message sent to RabbitMQ");
+    logger.info("Message sent to RabbitMQ");
 
     res.status(201).json(task);
   } catch (error: any) {
