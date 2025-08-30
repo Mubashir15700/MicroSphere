@@ -20,7 +20,7 @@ router.post('/', verifyToken, async (req: Request, res: Response) => {
 
     res.status(201).json(task);
   } catch (error: any) {
-    res.status(400).json({ message: error.message });
+    res.status(500).json({ message: error.message });
   }
 });
 

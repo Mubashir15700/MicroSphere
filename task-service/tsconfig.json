@@ -1,9 +1,9 @@
 {
   "compilerOptions": {
     "types": ["node", "jest"],
-    "module": "esnext",
+    "module": "nodenext",
     "target": "es2020",
-    "moduleResolution": "node",
+    "moduleResolution": "nodenext",
     "outDir": "dist",
     "rootDir": ".",
     "strict": true,
