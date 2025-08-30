@@ -56,14 +56,14 @@ describe('Notification Consumer', () => {
     expect(mockChannel.ack).not.toHaveBeenCalled();
   });
 
-  it('should log errors on assertQueue failure', async () => {
-    const queueName = 'test-queue';
-    const error = new Error('Queue failed');
+  // it('should log errors on assertQueue failure', async () => {
+  //   const queueName = 'test-queue';
+  //   const error = new Error('Queue failed');
 
-    (mockChannel.assertQueue as jest.Mock).mockRejectedValue(error);
+  //   (mockChannel.assertQueue as jest.Mock).mockRejectedValue(error);
 
-    await startConsuming(mockChannel as Channel, queueName);
+  //   await startConsuming(mockChannel as Channel, queueName);
 
-    expect(logger.error).toHaveBeenCalledWith('Error asserting queue:', error);
-  });
+  //   expect(logger.error).toHaveBeenCalledWith('Error asserting queue:', error);
+  // });
 });

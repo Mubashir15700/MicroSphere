@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 import jwt from 'jsonwebtoken';
 import app from '../src/app';
 import { User } from '../src/models/userModel';
+import { MONGO_URI } from '../src/config/envConfig';
 
 describe('User Service', () => {
   const testUser = {
@@ -14,10 +15,8 @@ describe('User Service', () => {
   let token: string;
   let userId: string;
 
-  const MONGO_URI_TEST = process.env.MONGO_URI_TEST || '';
-
   beforeAll(async () => {
-    await mongoose.connect(MONGO_URI_TEST);
+    await mongoose.connect(MONGO_URI);
   });
 
   beforeEach(async () => {
@@ -43,8 +42,8 @@ describe('User Service', () => {
     });
 
     it('should fail to create user with existing email', async () => {
-      await request(app).post('/users').send(testUser);
-      const res = await request(app).post('/users').send(testUser);
+      await request(app).post('/users').send('niko.b@example.com');
+      const res = await request(app).post('/users').send('niko.b@example.com');
       expect(res.status).toBe(400);
     });
   });

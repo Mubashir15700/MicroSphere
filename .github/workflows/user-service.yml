@@ -40,5 +40,5 @@ jobs:
 
       - name: Run tests
         env:
-          MONGO_URI: ${{ secrets.MONGO_URI }}
+          MONGO_URI: ${{ secrets.MONGO_URI_TEST }}
         run: npm test
