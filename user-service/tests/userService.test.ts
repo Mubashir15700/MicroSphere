@@ -33,38 +33,38 @@ describe('User Service', () => {
     await User.deleteMany({});
   });
 
-  describe('POST /users', () => {
+  describe('POST /', () => {
     it('should create a new user', async () => {
-      const res = await request(app).post('/users').send(testUser);
+      const res = await request(app).post('/').send(testUser);
       expect(res.status).toBe(201);
       expect(res.body).toHaveProperty('id');
       expect(res.body.email).toBe(testUser.email);
     });
 
     it('should fail to create user with existing email', async () => {
-      await request(app).post('/users').send('niko.b@example.com');
-      const res = await request(app).post('/users').send('niko.b@example.com');
+      await request(app).post('/').send(testUser);
+      const res = await request(app).post('/').send(testUser);
       expect(res.status).toBe(400);
     });
   });
 
-  describe('GET /users/email/:email', () => {
+  describe('GET /email/:email', () => {
     it('should return user by email', async () => {
-      await request(app).post('/users').send(testUser);
-      const res = await request(app).get(`/users/email/${testUser.email}`);
+      await request(app).post('/').send(testUser);
+      const res = await request(app).get(`/email/${testUser.email}`);
       expect(res.status).toBe(200);
       expect(res.body.email).toBe(testUser.email);
     });
 
     it('should return 404 if user not found', async () => {
-      const res = await request(app).get('/users/email/unknown@example.com');
+      const res = await request(app).get('/email/unknown@example.com');
       expect(res.status).toBe(404);
     });
   });
 
   describe('GET / (all users, protected)', () => {
     beforeEach(async () => {
-      const user = await request(app).post('/users').send(testUser);
+      const user = await request(app).post('/').send(testUser);
       userId = user.body.id;
       // simulate token signing (should match your JWT secret)
       token = jwt.sign(
@@ -88,7 +88,7 @@ describe('User Service', () => {
 
   describe('GET /:id (protected)', () => {
     beforeEach(async () => {
-      const user = await request(app).post('/users').send(testUser);
+      const user = await request(app).post('/').send(testUser);
       userId = user.body.id;
       token = jwt.sign(
         { id: userId, email: testUser.email },
@@ -103,11 +103,11 @@ describe('User Service', () => {
       expect(res.body.email).toBe(testUser.email);
     });
 
-    // it('should return 404 if user not found', async () => {
-    //   const invalidId = new mongoose.Types.ObjectId().toString();
-    //   const res = await request(app).get(`/${invalidId}`).set('Authorization', `Bearer ${token}`);
-    //   expect(res.status).toBe(404);
-    // });
+    it('should return 404 if user not found', async () => {
+      const invalidId = new mongoose.Types.ObjectId().toString();
+      const res = await request(app).get(`/${invalidId}`).set('Authorization', `Bearer ${token}`);
+      expect(res.status).toBe(404);
+    });
 
     it('should return 401 without token', async () => {
       const res = await request(app).get(`/${userId}`);

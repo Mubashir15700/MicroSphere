@@ -4,8 +4,17 @@ import { handleError } from '../utils/errorHandler';
 
 export const createUser = async (req: Request, res: Response) => {
   try {
+    const { email } = req.body;
+
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ message: 'Email already in use' });
+    }
+
     const user = new User(req.body);
+
     await user.save();
+
     res.status(201).json({ id: user._id, name: user.name, email: user.email });
   } catch (error: any) {
     if (error.code === 11000) {
