@@ -1,13 +1,13 @@
-import { register, login } from "../src/controllers/authController";
-import * as userService from "../src/services/userService";
-import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
+import { register, login } from '../src/controllers/authController';
+import * as userService from '../src/services/userService';
+import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
 
-jest.mock("../src/services/userService");
-jest.mock("bcrypt");
-jest.mock("jsonwebtoken");
+jest.mock('../src/services/userService');
+jest.mock('bcrypt');
+jest.mock('jsonwebtoken');
 
-describe("Auth Controller", () => {
+describe('Auth Controller', () => {
   const mockResponse = () => {
     const res: any = {};
     res.status = jest.fn().mockReturnValue(res);
@@ -19,142 +19,137 @@ describe("Auth Controller", () => {
     jest.clearAllMocks();
   });
 
-  describe("register", () => {
-    it("should return 400 if fields are missing", async () => {
-      const req: any = { body: { email: "", password: "", name: "" } };
+  describe('register', () => {
+    it('should return 400 if fields are missing', async () => {
+      const req: any = { body: { email: '', password: '', name: '' } };
       const res = mockResponse();
 
       await register(req, res);
 
       expect(res.status).toHaveBeenCalledWith(400);
       expect(res.json).toHaveBeenCalledWith({
-        message: "Name, email and password required",
+        message: 'Name, email and password required',
       });
     });
 
-    it("should create user and return token", async () => {
+    it('should create user and return token', async () => {
       const req: any = {
         body: {
-          name: "Jane",
-          email: "jane@example.com",
-          password: "password123",
+          name: 'Jane',
+          email: 'jane@example.com',
+          password: 'password123',
         },
       };
       const res = mockResponse();
 
-      (bcrypt.hash as jest.Mock).mockResolvedValue("hashedPassword");
+      (bcrypt.hash as jest.Mock).mockResolvedValue('hashedPassword');
       (userService.createUser as jest.Mock).mockResolvedValue({
-        id: "user123",
-        email: "jane@example.com",
+        id: 'user123',
+        email: 'jane@example.com',
       });
-      (jwt.sign as jest.Mock).mockReturnValue("jwtToken");
+      (jwt.sign as jest.Mock).mockReturnValue('jwtToken');
 
       await register(req, res);
 
-      expect(bcrypt.hash).toHaveBeenCalledWith("password123", 10);
+      expect(bcrypt.hash).toHaveBeenCalledWith('password123', 10);
       expect(userService.createUser).toHaveBeenCalledWith({
-        name: "Jane",
-        email: "jane@example.com",
-        password: "hashedPassword",
+        name: 'Jane',
+        email: 'jane@example.com',
+        password: 'hashedPassword',
       });
       expect(jwt.sign).toHaveBeenCalledWith(
-        { id: "user123", email: "jane@example.com" },
+        { id: 'user123', email: 'jane@example.com' },
         expect.any(String),
-        { expiresIn: "7h" }
+        { expiresIn: '7h' }
       );
       expect(res.status).toHaveBeenCalledWith(201);
-      expect(res.json).toHaveBeenCalledWith({ token: "jwtToken" });
+      expect(res.json).toHaveBeenCalledWith({ token: 'jwtToken' });
     });
 
-    it("should handle existing user error", async () => {
+    it('should handle existing user error', async () => {
       const req: any = {
         body: {
-          name: "Jane",
-          email: "jane@example.com",
-          password: "password123",
+          name: 'Jane',
+          email: 'jane@example.com',
+          password: 'password123',
         },
       };
       const res = mockResponse();
 
       const error = { response: { status: 400 } };
-      (bcrypt.hash as jest.Mock).mockResolvedValue("hashedPassword");
+      (bcrypt.hash as jest.Mock).mockResolvedValue('hashedPassword');
       (userService.createUser as jest.Mock).mockRejectedValue(error);
 
       await register(req, res);
 
       expect(res.status).toHaveBeenCalledWith(400);
       expect(res.json).toHaveBeenCalledWith({
-        message: "User already exists or invalid data",
+        message: 'User already exists or invalid data',
       });
     });
   });
 
-  describe("login", () => {
-    it("should return 400 if email or password is missing", async () => {
-      const req: any = { body: { email: "", password: "" } };
+  describe('login', () => {
+    it('should return 400 if email or password is missing', async () => {
+      const req: any = { body: { email: '', password: '' } };
       const res = mockResponse();
 
       await login(req, res);
 
       expect(res.status).toHaveBeenCalledWith(400);
       expect(res.json).toHaveBeenCalledWith({
-        message: "Email and password required",
+        message: 'Email and password required',
       });
     });
 
-    it("should return token if credentials are valid", async () => {
+    it('should return token if credentials are valid', async () => {
       const req: any = {
-        body: { email: "jane@example.com", password: "password123" },
+        body: { email: 'jane@example.com', password: 'password123' },
       };
       const res = mockResponse();
 
       (userService.getUserByEmail as jest.Mock).mockResolvedValue({
-        _id: "user123",
-        email: "jane@example.com",
-        password: "hashedPassword",
+        _id: 'user123',
+        email: 'jane@example.com',
+        password: 'hashedPassword',
       });
       (bcrypt.compare as jest.Mock).mockResolvedValue(true);
-      (jwt.sign as jest.Mock).mockReturnValue("jwtToken");
+      (jwt.sign as jest.Mock).mockReturnValue('jwtToken');
 
       await login(req, res);
 
-      expect(userService.getUserByEmail).toHaveBeenCalledWith(
-        "jane@example.com"
-      );
-      expect(bcrypt.compare).toHaveBeenCalledWith(
-        "password123",
-        "hashedPassword"
-      );
+      expect(userService.getUserByEmail).toHaveBeenCalledWith('jane@example.com');
+      expect(bcrypt.compare).toHaveBeenCalledWith('password123', 'hashedPassword');
       expect(jwt.sign).toHaveBeenCalledWith(
-        { id: "user123", email: "jane@example.com" },
+        { id: 'user123', email: 'jane@example.com' },
         expect.any(String),
-        { expiresIn: "7h" }
+        { expiresIn: '7h' }
       );
-      expect(res.json).toHaveBeenCalledWith({ token: "jwtToken" });
+      expect(res.json).toHaveBeenCalledWith({ token: 'jwtToken' });
     });
 
-    it("should return 401 if password is incorrect", async () => {
+    it('should return 401 if password is incorrect', async () => {
       const req: any = {
-        body: { email: "jane@example.com", password: "wrongpass" },
+        body: { email: 'jane@example.com', password: 'wrongpass' },
       };
       const res = mockResponse();
 
       (userService.getUserByEmail as jest.Mock).mockResolvedValue({
-        _id: "user123",
-        email: "jane@example.com",
-        password: "hashedPassword",
+        _id: 'user123',
+        email: 'jane@example.com',
+        password: 'hashedPassword',
       });
       (bcrypt.compare as jest.Mock).mockResolvedValue(false);
 
       await login(req, res);
 
       expect(res.status).toHaveBeenCalledWith(401);
-      expect(res.json).toHaveBeenCalledWith({ message: "Invalid credentials" });
+      expect(res.json).toHaveBeenCalledWith({ message: 'Invalid credentials' });
     });
 
-    it("should return 401 if user not found", async () => {
+    it('should return 401 if user not found', async () => {
       const req: any = {
-        body: { email: "nonexistent@example.com", password: "any" },
+        body: { email: 'nonexistent@example.com', password: 'any' },
       };
       const res = mockResponse();
 
@@ -164,7 +159,7 @@ describe("Auth Controller", () => {
       await login(req, res);
 
       expect(res.status).toHaveBeenCalledWith(401);
-      expect(res.json).toHaveBeenCalledWith({ message: "Invalid credentials" });
+      expect(res.json).toHaveBeenCalledWith({ message: 'Invalid credentials' });
     });
   });
 });

@@ -1,5 +1,5 @@
-import axios from "axios";
-import { USER_SERVICE_URL } from "../config/envConfig";
+import axios from 'axios';
+import { USER_SERVICE_URL } from '../config/envConfig';
 
 export const createUser = async (userData: any) => {
   const response = await axios.post(`${USER_SERVICE_URL}/users`, userData);

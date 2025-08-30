@@ -1,34 +1,34 @@
-import { Router } from "express";
-import { createProxyMiddleware } from "http-proxy-middleware";
-import { verifyToken } from "../middlewares/authMiddleware";
+import { Router } from 'express';
+import { createProxyMiddleware } from 'http-proxy-middleware';
+import { verifyToken } from '../middlewares/authMiddleware';
 
 const router = Router();
 
 // Auth service (no auth required)
 router.use(
-  "/auth",
+  '/auth',
   createProxyMiddleware({
-    target: "http://auth-service:3001",
+    target: 'http://auth-service:3001',
     changeOrigin: true,
   })
 );
 
 // User service (auth required)
 router.use(
-  "/users",
+  '/users',
   verifyToken,
   createProxyMiddleware({
-    target: "http://user-service:3002",
+    target: 'http://user-service:3002',
     changeOrigin: true,
   })
 );
 
 // Task service (auth required)
 router.use(
-  "/tasks",
+  '/tasks',
   verifyToken,
   createProxyMiddleware({
-    target: "http://task-service:3003",
+    target: 'http://task-service:3003',
     changeOrigin: true,
   })
 );

@@ -1,12 +1,12 @@
-import { Router, Request, Response } from "express";
-import { Task } from "../models/taskModel";
-import { getChannel, getQueueName } from "../services/rabbitmqService";
-import { verifyToken } from "../middlewares/authMiddleware";
-import { logger } from "../utils/logger";
+import { Router, Request, Response } from 'express';
+import { Task } from '../models/taskModel';
+import { getChannel, getQueueName } from '../services/rabbitmqService';
+import { verifyToken } from '../middlewares/authMiddleware';
+import { logger } from '../utils/logger';
 
 const router = Router();
 
-router.post("/", verifyToken, async (req: Request, res: Response) => {
+router.post('/', verifyToken, async (req: Request, res: Response) => {
   const { title, description, userId } = req.body;
 
   try {
@@ -14,11 +14,8 @@ router.post("/", verifyToken, async (req: Request, res: Response) => {
     await task.save();
 
     const channel = getChannel();
-    channel.sendToQueue(
-      getQueueName(),
-      Buffer.from(JSON.stringify({ taskId: task._id, userId }))
-    );
-    logger.info("Message sent to RabbitMQ");
+    channel.sendToQueue(getQueueName(), Buffer.from(JSON.stringify({ taskId: task._id, userId })));
+    logger.info('Message sent to RabbitMQ');
 
     res.status(201).json(task);
   } catch (error: any) {
@@ -26,7 +23,7 @@ router.post("/", verifyToken, async (req: Request, res: Response) => {
   }
 });
 
-router.get("/", verifyToken, async (_req: Request, res: Response) => {
+router.get('/', verifyToken, async (_req: Request, res: Response) => {
   try {
     const tasks = await Task.find();
     res.json(tasks);
