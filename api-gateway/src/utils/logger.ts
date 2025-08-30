@@ -8,15 +8,15 @@ const logFormat = printf(({ level, message, timestamp, stack }) => {
 
 export const logger = createLogger({
   level: 'http',
-  format: combine(
-    colorize(), // Add color to logs
-    timestamp(), // Add timestamp
-    errors({ stack: true }), // Capture error stack
-    logFormat
-  ),
+  format: combine(colorize(), timestamp(), errors({ stack: true }), logFormat),
   transports: [
     new transports.Console(),
-    new transports.File({ filename: 'logs/error.log', level: 'error' }),
-    new transports.File({ filename: 'logs/combined.log' }),
+    new transports.File({
+      filename: 'logs/error.log',
+      level: 'error',
+      maxsize: 10 * 1024 * 1024,
+      maxFiles: 5,
+    }),
+    new transports.File({ filename: 'logs/combined.log', maxsize: 10 * 1024 * 1024, maxFiles: 5 }),
   ],
 });

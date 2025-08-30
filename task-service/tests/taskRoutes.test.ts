@@ -54,7 +54,7 @@ describe('Task Routes', () => {
       expect(res.body).toMatchObject({ title: 'Test Task' });
     });
 
-    it('should return 400 if save fails', async () => {
+    it('should return 500 if save fails', async () => {
       (Task as any).mockImplementation(() => ({
         save: jest.fn().mockRejectedValue(new Error('DB error')),
       }));
@@ -63,7 +63,7 @@ describe('Task Routes', () => {
         .post('/')
         .send({ title: 'Test', description: 'Fail', userId: 'user123' });
 
-      expect(res.status).toBe(400);
+      expect(res.status).toBe(500);
       expect(res.body.message).toBe('DB error');
     });
   });

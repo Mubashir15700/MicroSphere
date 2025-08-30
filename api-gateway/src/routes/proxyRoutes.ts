@@ -19,6 +19,9 @@ router.use(
     target: 'http://auth-service:3001',
     changeOrigin: true,
     proxyTimeout: 5000,
+    pathRewrite: {
+      '^/auth': '',
+    },
     on: errorHandler('Auth service'),
   })
 );
@@ -31,6 +34,9 @@ router.use(
     target: 'http://user-service:3002',
     changeOrigin: true,
     proxyTimeout: 5000,
+    pathRewrite: {
+      '^/users': '',
+    },
     on: errorHandler('User service'),
   })
 );
@@ -43,6 +49,9 @@ router.use(
     target: 'http://task-service:3003',
     changeOrigin: true,
     proxyTimeout: 5000,
+    pathRewrite: {
+      '^/tasks': '',
+    },
     on: errorHandler('Task service'),
   })
 );

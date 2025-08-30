@@ -3,6 +3,7 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { JWT_SECRET } from '../config/envConfig';
 import { createUser, getUserByEmail } from '../services/userService';
+import { handleError } from '../utils/errorHandler';
 
 export const register = async (req: Request, res: Response) => {
   const { name, email, password } = req.body;
@@ -25,7 +26,7 @@ export const register = async (req: Request, res: Response) => {
     if (error.response?.status === 400) {
       return res.status(400).json({ message: 'User already exists or invalid data' });
     }
-    res.status(500).json({ message: error.message });
+    handleError(res, error);
   }
 };
 
@@ -38,6 +39,7 @@ export const login = async (req: Request, res: Response) => {
     const user = await getUserByEmail(email);
 
     const match = await bcrypt.compare(password, user.password);
+
     if (!match) return res.status(401).json({ message: 'Invalid credentials' });
 
     const token = jwt.sign({ id: user._id, email: user.email }, JWT_SECRET, {
@@ -49,6 +51,6 @@ export const login = async (req: Request, res: Response) => {
     if (error.response?.status === 404) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
-    res.status(500).json({ message: error.message });
+    handleError(res, error);
   }
 };
