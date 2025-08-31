@@ -5,8 +5,24 @@ import { Task } from '../src/models/taskModel';
 import * as rabbitService from '../src/services/rabbitmqService';
 import { verifyToken } from '../src/middlewares/authMiddleware';
 
-jest.mock('../src/models/taskModel');
-jest.mock('../src/services/rabbitmqService');
+jest.mock('../src/models/taskModel', () => {
+  return {
+    Task: Object.assign(
+      jest.fn().mockImplementation(() => ({
+        save: jest.fn(),
+      })),
+      {
+        find: jest.fn(),
+        findById: jest.fn(),
+        findOne: jest.fn(),
+      }
+    ),
+  };
+});
+jest.mock('../src/services/rabbitmqService', () => ({
+  getChannel: jest.fn().mockReturnValue({ sendToQueue: jest.fn() }),
+  getQueueName: jest.fn().mockReturnValue('test-queue'),
+}));
 jest.mock('../src/middlewares/authMiddleware');
 
 const app = express();
@@ -17,39 +33,48 @@ describe('Task Routes', () => {
   const mockTokenMiddleware = verifyToken as jest.Mock;
 
   beforeEach(() => {
-    mockTokenMiddleware.mockImplementation((_req, _res, next) => next());
+    mockTokenMiddleware.mockImplementation((req, _res, next) => {
+      (req as any).user = { userId: 'user123', role: 'admin' };
+      next();
+    });
   });
 
   afterEach(() => {
     jest.clearAllMocks();
   });
 
+  afterAll(() => {
+    jest.clearAllMocks();
+  });
+
   describe('POST /', () => {
     it('should create task and send to RabbitMQ', async () => {
       const mockTask = {
-        _id: 'task123',
+        _id: '64e4b9f1c2a1d2b4f5e6a787',
         title: 'Test Task',
         description: 'Test Desc',
-        userId: 'user123',
+        assigneeId: '64e4b9f1c2a1d2b4f5e6a784',
         save: jest.fn().mockResolvedValue(true),
       };
 
       (Task as any).mockImplementation(() => mockTask);
       const sendToQueue = jest.fn();
-      (rabbitService.getChannel as jest.Mock).mockReturnValue({ sendToQueue });
+      (rabbitService.getChannel as jest.Mock).mockResolvedValue({
+        sendToQueue: jest.fn(),
+      });
       (rabbitService.getQueueName as jest.Mock).mockReturnValue('test-queue');
 
       const res = await request(app).post('/').send({
         title: 'Test Task',
         description: 'Test Desc',
-        userId: 'user123',
+        assigneeId: '64e4b9f1c2a1d2b4f5e6a784',
       });
 
       expect(res.status).toBe(201);
       expect(mockTask.save).toHaveBeenCalled();
       expect(sendToQueue).toHaveBeenCalledWith(
         'test-queue',
-        Buffer.from(JSON.stringify({ taskId: mockTask._id, userId: 'user123' }))
+        Buffer.from(JSON.stringify({ taskId: mockTask._id, userId: '64e4b9f1c2a1d2b4f5e6a784' }))
       );
       expect(res.body).toMatchObject({ title: 'Test Task' });
     });
@@ -61,7 +86,7 @@ describe('Task Routes', () => {
 
       const res = await request(app)
         .post('/')
-        .send({ title: 'Test', description: 'Fail', userId: 'user123' });
+        .send({ title: 'Test', description: 'Fail', userId: '64e4b9f1c2a1d2b4f5e6a787' });
 
       expect(res.status).toBe(500);
       expect(res.body.message).toBe('DB error');

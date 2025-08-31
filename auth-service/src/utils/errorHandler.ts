@@ -8,7 +8,7 @@ export const handleError = (
 ) => {
   logger.error(error);
 
-  res.status(500).json({
+  res.status(error.status || 500).json({
     message: error.message || customMessage,
     ...(process.env.NODE_ENV === 'development' && { error: error.stack }),
   });

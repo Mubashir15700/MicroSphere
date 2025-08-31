@@ -9,4 +9,6 @@ COPY . .
 
 EXPOSE 3002
 
-CMD ["npm", "run", "dev"]
+# CMD ["npm", "run", "dev"]
+
+CMD ["sh", "-c", "npm run seed:admin && npm run dev"]

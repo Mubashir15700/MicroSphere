@@ -1,17 +1,29 @@
 import { Request, Response } from 'express';
+import mongoose from 'mongoose';
+import bcrypt from 'bcrypt';
 import { User } from '../models/userModel';
 import { handleError } from '../utils/errorHandler';
 
+const isValidObjectId = (id: string): boolean => {
+  return mongoose.Types.ObjectId.isValid(id);
+};
+
 export const createUser = async (req: Request, res: Response) => {
   try {
-    const { email } = req.body;
+    const { name, email, password } = req.body;
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ message: 'Email already in use' });
     }
 
-    const user = new User(req.body);
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const user = new User({
+      name,
+      email,
+      password: hashedPassword,
+    });
 
     await user.save();
 
@@ -44,19 +56,83 @@ export const getAllUsers = async (_req: Request, res: Response) => {
   }
 };
 
-export const getUserById = async (req: Request, res: Response) => {
+export const getUserById = async (req: any, res: Response) => {
   try {
-    const user = await User.findById(req.params.id).select('-password');
-    if (!user) return res.status(404).json({ message: 'User not found' });
-    res.json(user);
+    const { id } = req.params;
+
+    if (!isValidObjectId(id)) {
+      return res.status(400).json({ message: 'Invalid user ID' });
+    }
+
+    if (req.user.role !== 'admin' && req.user.id !== id) {
+      return res.status(403).json({ message: 'Access denied. Admins only.' });
+    }
+
+    const user = await User.findById(id).select('-password');
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    return res.status(200).json(user);
   } catch (error: any) {
     handleError(res, error);
   }
 };
 
-export const deleteAllUsers = async (req: Request, res: Response) => {
+export const updateUser = async (req: any, res: Response) => {
   try {
-    const result = await User.deleteMany({});
+    const { id } = req.params;
+    const { name, email } = req.body;
+
+    if (!isValidObjectId(id)) {
+      return res.status(400).json({ message: 'Invalid user ID' });
+    }
+
+    if (req.user.role !== 'admin' && req.user.id !== id) {
+      return res.status(403).json({ message: 'Access denied. Admins only.' });
+    }
+
+    const user = await User.findById(id);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    if (name !== undefined) {
+      user.name = name;
+    }
+    if (email !== undefined) {
+      user.email = email;
+    }
+
+    await user.save();
+
+    res.status(200).json({ message: 'User updated successfully' });
+  } catch (error: any) {
+    handleError(res, error);
+  }
+};
+
+export const deleteUsers = async (req: Request, res: Response) => {
+  try {
+    const { id, includeAdmins } = req.query;
+
+    if (id) {
+      if (!isValidObjectId(id as string)) {
+        return res.status(400).json({ message: 'Invalid user ID' });
+      }
+
+      const user = await User.findByIdAndDelete(id);
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+      return res.status(200).json({ message: 'User deleted successfully' });
+    }
+
+    const deleteAllUsers = includeAdmins === 'true';
+    const filter = deleteAllUsers ? {} : { role: { $ne: 'admin' } };
+
+    const result = await User.deleteMany(filter);
 
     if (result.deletedCount === 0) {
       return res.status(404).json({ message: 'No users found to delete' });

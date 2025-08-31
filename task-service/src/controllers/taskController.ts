@@ -1,19 +1,44 @@
 import { Request, Response } from 'express';
+import mongoose from 'mongoose';
 import { Task } from '../models/taskModel';
 import { getChannel, getQueueName } from '../services/rabbitmqService';
+import { getUserByID } from '../services/userService';
 import { logger } from '../utils/logger';
 import { handleError } from '../utils/errorHandler';
 
-export const createTask = async (req: Request, res: Response) => {
-  const { title, description, userId } = req.body;
+const isValidObjectId = (id: string): boolean => {
+  return mongoose.Types.ObjectId.isValid(id);
+};
 
+export const createTask = async (req: Request, res: Response) => {
+  const { title, description, assigneeId } = req.body;
+
+  let validAssigneeId: mongoose.Types.ObjectId | undefined;
   try {
-    const task = new Task({ title, description, userId });
+    if (assigneeId) {
+      const response = await getUserByID(req, assigneeId);
+
+      if (!response.email) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+      validAssigneeId = new mongoose.Types.ObjectId(assigneeId);
+    }
+
+    const task = new Task({
+      title,
+      description,
+      ...(validAssigneeId && { assigneeId: validAssigneeId }),
+    });
     await task.save();
 
-    const channel = getChannel();
-    channel.sendToQueue(getQueueName(), Buffer.from(JSON.stringify({ taskId: task._id, userId })));
-    logger.info('Message sent to RabbitMQ');
+    if (validAssigneeId) {
+      const channel = getChannel();
+      channel.sendToQueue(
+        getQueueName(),
+        Buffer.from(JSON.stringify({ taskId: task._id, assigneeId }))
+      );
+      logger.info('Message sent to RabbitMQ');
+    }
 
     res.status(201).json(task);
   } catch (error: any) {
@@ -34,10 +59,29 @@ export const getAllTasks = async (_req: Request, res: Response) => {
   }
 };
 
-export const getTasksByUser = async (req: Request, res: Response) => {
+export const getTasksByUser = async (req: any, res: Response) => {
   try {
     const { userId } = req.params;
-    const tasks = await Task.find({ userId }).sort({ createdAt: -1 });
+
+    if (!isValidObjectId(userId)) {
+      return res.status(400).json({ message: 'Invalid user ID' });
+    }
+
+    if (req.user.role !== 'admin' && req.user.id !== userId) {
+      return res.status(403).json({ message: 'Access denied. Admins only.' });
+    }
+
+    const user = await getUserByID(req, userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const tasks = await Task.find({ assigneeId: userId }).sort({ createdAt: -1 });
+
+    if (tasks.length === 0) {
+      return res.status(404).json({ message: 'No tasks found for the user' });
+    }
+
     res.json(tasks);
   } catch (error: any) {
     handleError(res, error);
@@ -46,7 +90,13 @@ export const getTasksByUser = async (req: Request, res: Response) => {
 
 export const getTaskById = async (req: Request, res: Response) => {
   try {
-    const task = await Task.findById(req.params.id);
+    const { id } = req.params;
+
+    if (!isValidObjectId(id)) {
+      return res.status(400).json({ message: 'Invalid task ID' });
+    }
+
+    const task = await Task.findById(id);
     if (!task) return res.status(404).json({ message: 'Task not found' });
     res.json(task);
   } catch (error: any) {
@@ -54,31 +104,82 @@ export const getTaskById = async (req: Request, res: Response) => {
   }
 };
 
-export const updateTaskStatus = async (req: Request, res: Response) => {
+export const updateTask = async (req: any, res: Response) => {
   try {
-    const { status } = req.body;
-    if (!['pending', 'in-progress', 'completed'].includes(status)) {
+    const updates = req.body;
+    const allowedFields =
+      req.user.role === 'admin'
+        ? ['title', 'description', 'dueDate', 'status', 'assigneeId']
+        : ['status'];
+    const invalidFields = Object.keys(updates).filter(key => !allowedFields.includes(key));
+
+    if (invalidFields.length > 0) {
+      return res.status(400).json({ message: `Invalid fields: ${invalidFields.join(', ')}` });
+    }
+
+    if (updates.status && !['pending', 'in-progress', 'completed'].includes(updates.status)) {
       return res.status(400).json({ message: 'Invalid status value' });
     }
 
-    const task = await Task.findByIdAndUpdate(req.params.id, { status }, { new: true });
+    const { id } = req.params;
+
+    if (!isValidObjectId(id)) {
+      return res.status(400).json({ message: 'Invalid task ID' });
+    }
+
+    const task = await Task.findById(id);
 
     if (!task) return res.status(404).json({ message: 'Task not found' });
-    res.json(task);
+
+    // Only admin OR the assigned user can update
+    if (req.user.role !== 'admin') {
+      if (!task.assigneeId) {
+        return res.status(403).json({ message: 'Task is unassigned. Only admins can update.' });
+      }
+
+      if (task.assigneeId.toString() !== req.user.id) {
+        return res.status(403).json({ message: 'Access denied. You are not the assignee.' });
+      }
+    }
+
+    Object.keys(updates).forEach(key => {
+      (task as any)[key] = updates[key];
+    });
+
+    const updatedTask = await task.save();
+    res.status(200).json({
+      message: 'Task updated successfully',
+      task: updatedTask.toObject(),
+    });
   } catch (error: any) {
     handleError(res, error);
   }
 };
 
-export const deleteAllTasks = async (req: Request, res: Response) => {
+export const deleteTasks = async (req: Request, res: Response) => {
   try {
-    const result = await Task.deleteMany({});
+    const { id } = req.query;
 
-    if (result.deletedCount === 0) {
-      return res.status(404).json({ message: 'No tasks found to delete' });
+    let result;
+    if (id) {
+      if (!isValidObjectId(id as string)) {
+        return res.status(400).json({ message: 'Invalid task ID' });
+      }
+
+      result = await Task.findByIdAndDelete(id);
+      if (!result) {
+        return res.status(404).json({ message: 'Task not found' });
+      }
+      return res.status(200).json({ message: 'Task deleted successfully' });
+    } else {
+      const deleteResult = await Task.deleteMany({});
+      if (deleteResult.deletedCount === 0) {
+        return res.status(404).json({ message: 'No tasks found to delete' });
+      }
+      return res
+        .status(200)
+        .json({ message: `${deleteResult.deletedCount} tasks have been deleted.` });
     }
-
-    res.status(200).json({ message: `${result.deletedCount} tasks have been deleted.` });
   } catch (error: any) {
     handleError(res, error);
   }

@@ -1,9 +1,15 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt, { JwtPayload } from 'jsonwebtoken';
-import { JWT_SECRET } from '../config/envConfig';
+import { JWT_SECRET, SHARED_SECRET } from '../config/envConfig';
 
 export interface AuthenticatedRequest extends Request {
   user?: string | JwtPayload;
+}
+
+interface JwtUser {
+  id: string;
+  email: string;
+  role: string;
 }
 
 export function verifyToken(req: AuthenticatedRequest, res: Response, next: NextFunction) {
@@ -22,7 +28,34 @@ export function verifyToken(req: AuthenticatedRequest, res: Response, next: Next
       return res.status(401).json({ message: 'Invalid token' });
     }
 
-    req.user = decoded;
+    req.user = decoded as JwtUser;
     next();
   });
 }
+
+export const requireAdmin = (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  if ((req.user as JwtUser)?.role !== 'admin') {
+    return res.status(403).json({ message: 'Access denied. Admins only.' });
+  }
+  next();
+};
+
+export const validateServiceSecretOrAdmin = (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  const secret = req.headers['x-service-secret'];
+  if (secret === SHARED_SECRET) {
+    return next();
+  }
+
+  // If no service secret → require token
+  verifyToken(req, res, (err?: any) => {
+    if (err) return; // verifyToken already sent response
+    if ((req.user as JwtUser)?.role === 'admin') {
+      return next();
+    }
+    return res.status(403).json({ message: 'Forbidden: Invalid credentials' });
+  });
+};

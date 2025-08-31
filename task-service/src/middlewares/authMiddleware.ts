@@ -6,6 +6,12 @@ export interface AuthenticatedRequest extends Request {
   user?: string | JwtPayload;
 }
 
+interface JwtUser {
+  id: string;
+  email: string;
+  role: string;
+}
+
 export function verifyToken(req: AuthenticatedRequest, res: Response, next: NextFunction) {
   const authHeader = req.headers['authorization'];
   if (!authHeader) {
@@ -22,7 +28,14 @@ export function verifyToken(req: AuthenticatedRequest, res: Response, next: Next
       return res.status(401).json({ message: 'Invalid token' });
     }
 
-    req.user = decoded;
+    req.user = decoded as JwtUser;
     next();
   });
 }
+
+export const requireAdmin = (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  if ((req.user as JwtUser)?.role !== 'admin') {
+    return res.status(403).json({ message: 'Access denied. Admins only.' });
+  }
+  next();
+};

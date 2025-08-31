@@ -1,21 +1,21 @@
 import { Router } from 'express';
-import { verifyToken } from '../middlewares/authMiddleware';
+import { verifyToken, requireAdmin } from '../middlewares/authMiddleware';
 import {
   createTask,
   getAllTasks,
   getTasksByUser,
   getTaskById,
-  updateTaskStatus,
-  deleteAllTasks,
+  updateTask,
+  deleteTasks,
 } from '../controllers/taskController';
 
 const router = Router();
 
-router.post('/', verifyToken, createTask);
-router.get('/', verifyToken, getAllTasks);
+router.post('/', verifyToken, requireAdmin, createTask);
+router.get('/', verifyToken, requireAdmin, getAllTasks);
 router.get('/user/:userId', verifyToken, getTasksByUser);
 router.get('/:id', verifyToken, getTaskById);
-router.patch('/:id/status', verifyToken, updateTaskStatus);
-router.delete('/', verifyToken, deleteAllTasks);
+router.put('/:id', verifyToken, updateTask);
+router.delete('/', verifyToken, requireAdmin, deleteTasks);
 
 export default router;

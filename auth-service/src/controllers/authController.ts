@@ -13,11 +13,9 @@ export const register = async (req: Request, res: Response) => {
   }
 
   try {
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const user = await createUser({ name, email, password });
 
-    const user = await createUser({ name, email, password: hashedPassword });
-
-    const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, {
+    const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, JWT_SECRET, {
       expiresIn: '7h',
     });
 
@@ -42,7 +40,7 @@ export const login = async (req: Request, res: Response) => {
 
     if (!match) return res.status(401).json({ message: 'Invalid credentials' });
 
-    const token = jwt.sign({ id: user._id, email: user.email }, JWT_SECRET, {
+    const token = jwt.sign({ id: user._id, email: user.email, role: user.role }, JWT_SECRET, {
       expiresIn: '7h',
     });
 

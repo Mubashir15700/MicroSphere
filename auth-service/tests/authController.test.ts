@@ -42,20 +42,19 @@ describe('Auth Controller', () => {
       };
       const res = mockResponse();
 
-      (bcrypt.hash as jest.Mock).mockResolvedValue('hashedPassword');
       (userService.createUser as jest.Mock).mockResolvedValue({
         id: 'user123',
         email: 'jane@example.com',
+        password: 'password123',
       });
       (jwt.sign as jest.Mock).mockReturnValue('jwtToken');
 
       await register(req, res);
 
-      expect(bcrypt.hash).toHaveBeenCalledWith('password123', 10);
       expect(userService.createUser).toHaveBeenCalledWith({
         name: 'Jane',
         email: 'jane@example.com',
-        password: 'hashedPassword',
+        password: 'password123',
       });
       expect(jwt.sign).toHaveBeenCalledWith(
         { id: 'user123', email: 'jane@example.com' },
