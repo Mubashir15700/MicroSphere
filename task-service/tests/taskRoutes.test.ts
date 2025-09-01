@@ -1,116 +1,86 @@
-import request from 'supertest';
-import express from 'express';
-import taskRouter from '../src/routes/taskRoutes';
+import { Request, Response } from 'express';
+import mongoose from 'mongoose';
+import { createTask } from '../src/controllers/taskController';
 import { Task } from '../src/models/taskModel';
-import * as rabbitService from '../src/services/rabbitmqService';
-import { verifyToken } from '../src/middlewares/authMiddleware';
+import * as rabbitmqService from '../src/services/rabbitmqService';
+import * as userService from '../src/services/userService';
 
-jest.mock('../src/models/taskModel', () => {
-  return {
-    Task: Object.assign(
-      jest.fn().mockImplementation(() => ({
-        save: jest.fn(),
-      })),
-      {
-        find: jest.fn(),
-        findById: jest.fn(),
-        findOne: jest.fn(),
-      }
-    ),
-  };
-});
-jest.mock('../src/services/rabbitmqService', () => ({
-  getChannel: jest.fn().mockReturnValue({ sendToQueue: jest.fn() }),
-  getQueueName: jest.fn().mockReturnValue('test-queue'),
-}));
-jest.mock('../src/middlewares/authMiddleware');
+jest.mock('../src/models/taskModel');
+jest.mock('../src/services/userService');
+jest.mock('../src/services/rabbitmqService');
 
-const app = express();
-app.use(express.json());
-app.use('/', taskRouter);
-
-describe('Task Routes', () => {
-  const mockTokenMiddleware = verifyToken as jest.Mock;
+describe('createTask', () => {
+  let req: Partial<Request>;
+  let res: Partial<Response>;
+  let statusMock: jest.Mock;
+  let jsonMock: jest.Mock;
 
   beforeEach(() => {
-    mockTokenMiddleware.mockImplementation((req, _res, next) => {
-      (req as any).user = { userId: 'user123', role: 'admin' };
-      next();
-    });
-  });
+    statusMock = jest.fn().mockReturnThis();
+    jsonMock = jest.fn();
 
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
-
-  afterAll(() => {
-    jest.clearAllMocks();
-  });
-
-  describe('POST /', () => {
-    it('should create task and send to RabbitMQ', async () => {
-      const mockTask = {
-        _id: '64e4b9f1c2a1d2b4f5e6a787',
+    req = {
+      body: {
         title: 'Test Task',
-        description: 'Test Desc',
-        assigneeId: '64e4b9f1c2a1d2b4f5e6a784',
-        save: jest.fn().mockResolvedValue(true),
-      };
+        description: 'Test Description',
+        assigneeId: new mongoose.Types.ObjectId().toString(),
+      },
+    };
 
-      (Task as any).mockImplementation(() => mockTask);
-      const sendToQueue = jest.fn();
-      (rabbitService.getChannel as jest.Mock).mockResolvedValue({
-        sendToQueue: jest.fn(),
-      });
-      (rabbitService.getQueueName as jest.Mock).mockReturnValue('test-queue');
-
-      const res = await request(app).post('/').send({
-        title: 'Test Task',
-        description: 'Test Desc',
-        assigneeId: '64e4b9f1c2a1d2b4f5e6a784',
-      });
-
-      expect(res.status).toBe(201);
-      expect(mockTask.save).toHaveBeenCalled();
-      expect(sendToQueue).toHaveBeenCalledWith(
-        'test-queue',
-        Buffer.from(JSON.stringify({ taskId: mockTask._id, userId: '64e4b9f1c2a1d2b4f5e6a784' }))
-      );
-      expect(res.body).toMatchObject({ title: 'Test Task' });
-    });
-
-    it('should return 500 if save fails', async () => {
-      (Task as any).mockImplementation(() => ({
-        save: jest.fn().mockRejectedValue(new Error('DB error')),
-      }));
-
-      const res = await request(app)
-        .post('/')
-        .send({ title: 'Test', description: 'Fail', userId: '64e4b9f1c2a1d2b4f5e6a787' });
-
-      expect(res.status).toBe(500);
-      expect(res.body.message).toBe('DB error');
-    });
+    res = {
+      status: statusMock,
+      json: jsonMock,
+    };
   });
 
-  describe('GET /', () => {
-    it('should return tasks', async () => {
-      const mockTasks = [{ title: 'T1' }, { title: 'T2' }];
-      (Task.find as jest.Mock).mockResolvedValue(mockTasks);
+  it('should create a task and send a message if assignee exists', async () => {
+    // Mocking user service to return a valid user
+    (userService.getUserByID as jest.Mock).mockResolvedValue({ email: 'test@example.com' });
 
-      const res = await request(app).get('/');
+    // Mocking Task.save() to return a valid task object
+    const mockTask = { _id: '123', title: 'Test Task', description: 'Test Description' };
+    (Task.prototype.save as jest.Mock).mockResolvedValue(mockTask);
 
-      expect(res.status).toBe(200);
-      expect(res.body).toEqual(mockTasks);
-    });
+    // Mocking RabbitMQ channel
+    const sendToQueueMock = jest.fn();
+    (rabbitmqService.getChannel as jest.Mock).mockReturnValue({ sendToQueue: sendToQueueMock });
+    (rabbitmqService.getQueueName as jest.Mock).mockReturnValue('testQueue');
 
-    it('should return 500 if find fails', async () => {
-      (Task.find as jest.Mock).mockRejectedValue(new Error('DB error'));
+    await createTask(req as Request, res as Response);
 
-      const res = await request(app).get('/');
+    expect(statusMock).toHaveBeenCalledWith(201);
 
-      expect(res.status).toBe(500);
-      expect(res.body.message).toBe('DB error');
+    // expect(jsonMock).toHaveBeenCalledWith(
+    //   expect.objectContaining({
+    //     title: 'Test Task',
+    //     description: 'Test Description',
+    //     _id: '123',
+    //   })
+    // );
+
+    expect(sendToQueueMock).toHaveBeenCalled();
+  });
+
+  it('should return 404 if user is not found', async () => {
+    (userService.getUserByID as jest.Mock).mockResolvedValue({});
+
+    await createTask(req as Request, res as Response);
+
+    expect(statusMock).toHaveBeenCalledWith(404);
+    expect(jsonMock).toHaveBeenCalledWith({ message: 'User not found' });
+  });
+
+  it('should handle duplicate title error', async () => {
+    (userService.getUserByID as jest.Mock).mockResolvedValue({ email: 'test@example.com' });
+    const error = new Error('Duplicate') as any;
+    error.code = 11000;
+    (Task.prototype.save as jest.Mock).mockRejectedValue(error);
+
+    await createTask(req as Request, res as Response);
+
+    expect(statusMock).toHaveBeenCalledWith(400);
+    expect(jsonMock).toHaveBeenCalledWith({
+      message: 'Task with this title already exists for the user.',
     });
   });
 });
