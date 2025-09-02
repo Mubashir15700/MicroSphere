@@ -1,10 +1,11 @@
 import { Channel } from 'amqplib';
-import { startConsuming } from '../src/consumers/notificationConsumer';
-import { logger } from '../src/utils/logger';
+import startConsuming from '../src/consumers/notificationConsumer';
+import logger from '../src/utils/logger';
 
 // Mock logger
 jest.mock('../src/utils/logger', () => ({
-  logger: {
+  __esModule: true,
+  default: {
     info: jest.fn(),
     error: jest.fn(),
   },

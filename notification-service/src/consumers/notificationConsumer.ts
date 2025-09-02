@@ -1,7 +1,7 @@
 import { Channel, ConsumeMessage } from 'amqplib';
-import { logger } from '../utils/logger';
+import logger from '../utils/logger';
 
-export function startConsuming(channel: Channel, queueName: string) {
+const startConsuming = (channel: Channel, queueName: string) => {
   channel
     .assertQueue(queueName)
     .then(() => {
@@ -18,4 +18,6 @@ export function startConsuming(channel: Channel, queueName: string) {
     .catch(err => {
       logger.error('Error asserting queue:', err);
     });
-}
+};
+
+export default startConsuming;

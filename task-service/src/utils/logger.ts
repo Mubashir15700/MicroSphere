@@ -6,7 +6,7 @@ const logFormat = printf(({ level, message, timestamp, stack }) => {
   return `${timestamp} [${level}]: ${stack || message}`;
 });
 
-export const logger = createLogger({
+const logger = createLogger({
   level: 'http',
   format: combine(colorize(), timestamp(), errors({ stack: true }), logFormat),
   transports: [
@@ -20,3 +20,5 @@ export const logger = createLogger({
     new transports.File({ filename: 'logs/combined.log', maxsize: 10 * 1024 * 1024, maxFiles: 5 }),
   ],
 });
+
+export default logger;

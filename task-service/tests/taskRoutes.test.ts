@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
 import { createTask } from '../src/controllers/taskController';
-import { Task } from '../src/models/taskModel';
+import Task from '../src/models/taskModel';
 import * as rabbitmqService from '../src/services/rabbitmqService';
 import * as userService from '../src/services/userService';
 
@@ -80,7 +80,7 @@ describe('createTask', () => {
 
     expect(statusMock).toHaveBeenCalledWith(400);
     expect(jsonMock).toHaveBeenCalledWith({
-      message: 'Task with this title already exists for the user.',
+      message: 'Task with this title already exists.',
     });
   });
 });

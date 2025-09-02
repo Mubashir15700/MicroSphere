@@ -1,8 +1,8 @@
 import express, { NextFunction, Request, Response } from 'express';
 import bodyParser from 'body-parser';
 import taskRoutes from './routes/taskRoutes';
-import { errorHandler } from './middlewares/errorMiddleware';
-import { logger } from './utils/logger';
+import errorHandler from './middlewares/errorMiddleware';
+import logger from './utils/logger';
 
 const app = express();
 

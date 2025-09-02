@@ -3,7 +3,10 @@ import jwt, { JwtPayload } from 'jsonwebtoken';
 import { JWT_SECRET } from '../config/envConfig';
 
 export interface AuthenticatedRequest extends Request {
-  user?: string | JwtPayload;
+  user?: {
+    id: string;
+    role: string;
+  } & JwtPayload;
 }
 
 interface JwtUser {
@@ -12,7 +15,7 @@ interface JwtUser {
   role: string;
 }
 
-export function verifyToken(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+export const verifyToken = (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   const authHeader = req.headers['authorization'];
   if (!authHeader) {
     return res.status(401).json({ message: 'Authorization header missing' });
@@ -31,7 +34,7 @@ export function verifyToken(req: AuthenticatedRequest, res: Response, next: Next
     req.user = decoded as JwtUser;
     next();
   });
-}
+};
 
 export const requireAdmin = (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   if ((req.user as JwtUser)?.role !== 'admin') {

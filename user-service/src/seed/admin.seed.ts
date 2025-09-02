@@ -1,8 +1,8 @@
 import bcrypt from 'bcrypt';
 import { MONGO_URI, ADMIN_CREDENTIALS } from '../config/envConfig';
 import { connectDB, disconnectDB } from '../config/dbConfig';
-import { User } from '../models/userModel';
-import { logger } from '../utils/logger';
+import User from '../models/userModel';
+import logger from '../utils/logger';
 
 const seedAdmin = async () => {
   try {

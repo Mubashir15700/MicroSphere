@@ -1,7 +1,7 @@
 import { Router, Response } from 'express';
 import { createProxyMiddleware } from 'http-proxy-middleware';
-import { verifyToken } from '../middlewares/authMiddleware';
-import { logger } from '../utils/logger';
+import verifyToken from '../middlewares/authMiddleware';
+import logger from '../utils/logger';
 
 const router = Router();
 
@@ -12,48 +12,47 @@ const errorHandler = (service: string) => ({
   },
 });
 
-// Auth service (no auth required)
-router.use(
-  '/auth',
-  createProxyMiddleware({
+const targetRoutes = [
+  {
+    path: '/auth',
     target: 'http://auth-service:3001',
-    changeOrigin: true,
-    proxyTimeout: 5000,
-    pathRewrite: {
-      '^/auth': '',
-    },
-    on: errorHandler('Auth service'),
-  })
-);
-
-// User service (auth required)
-router.use(
-  '/users',
-  verifyToken,
-  createProxyMiddleware({
+    authRequired: false,
+    name: 'Auth service',
+  },
+  {
+    path: '/users',
     target: 'http://user-service:3002',
-    changeOrigin: true,
-    proxyTimeout: 5000,
-    pathRewrite: {
-      '^/users': '',
-    },
-    on: errorHandler('User service'),
-  })
-);
-
-// Task service (auth required)
-router.use(
-  '/tasks',
-  verifyToken,
-  createProxyMiddleware({
+    authRequired: true,
+    name: 'User service',
+  },
+  {
+    path: '/tasks',
     target: 'http://task-service:3003',
-    changeOrigin: true,
-    proxyTimeout: 5000,
-    pathRewrite: {
-      '^/tasks': '',
-    },
-    on: errorHandler('Task service'),
-  })
-);
+    authRequired: true,
+    name: 'Task service',
+  },
+];
+
+targetRoutes.forEach(route => {
+  const middlewares = [];
+
+  if (route.authRequired) {
+    middlewares.push(verifyToken);
+  }
+
+  middlewares.push(
+    createProxyMiddleware({
+      target: route.target,
+      changeOrigin: true,
+      proxyTimeout: 5000,
+      pathRewrite: {
+        [`^${route.path}`]: '',
+      },
+      on: errorHandler(route.name),
+    })
+  );
+
+  router.use(route.path, ...middlewares);
+});
 
 export default router;

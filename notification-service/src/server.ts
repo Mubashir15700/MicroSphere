@@ -1,9 +1,9 @@
 import { QUEUE_NAME, RETRY_COUNT, RETRY_DELAY } from './config/rabbitmqConfig';
 import { createRabbitMQConnection, createRabbitMQChannel } from './services/rabbitmqService';
-import { startConsuming } from './consumers/notificationConsumer';
-import { logger } from './utils/logger';
+import startConsuming from './consumers/notificationConsumer';
+import logger from './utils/logger';
 
-async function connectRabbitMQ(retries = RETRY_COUNT, delay = RETRY_DELAY): Promise<void> {
+const connectRabbitMQ = async (retries = RETRY_COUNT, delay = RETRY_DELAY): Promise<void> => {
   while (retries > 0) {
     try {
       const connection = await createRabbitMQConnection();
@@ -27,6 +27,6 @@ async function connectRabbitMQ(retries = RETRY_COUNT, delay = RETRY_DELAY): Prom
       await new Promise(resolve => setTimeout(resolve, delay));
     }
   }
-}
+};
 
 connectRabbitMQ();

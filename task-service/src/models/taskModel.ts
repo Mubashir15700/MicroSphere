@@ -34,4 +34,6 @@ TaskSchema.index({ assigneeId: 1, createdAt: -1 });
 // Unique compound index
 TaskSchema.index({ assigneeId: 1, title: 1 }, { unique: true });
 
-export const Task = mongoose.model<ITask>('Task', TaskSchema);
+const Task = mongoose.model<ITask>('Task', TaskSchema);
+
+export default Task;

@@ -4,10 +4,10 @@ import morgan from 'morgan';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import proxyRoutes from './routes/proxyRoutes';
-import { errorHandler } from './middlewares/errorMiddleware';
+import errorHandler from './middlewares/errorMiddleware';
 import { corsConfig } from './config/corsConfig';
 import { rateLimitConfig } from './config/rateLimitConfig';
-import { logger } from './utils/logger';
+import logger from './utils/logger';
 
 const app = express();
 

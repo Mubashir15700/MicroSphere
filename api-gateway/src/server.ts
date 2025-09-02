@@ -1,6 +1,6 @@
 import app from './app';
 import { PORT } from './config/envConfig';
-import { logger } from './utils/logger';
+import logger from './utils/logger';
 
 const server = app.listen(PORT, () => {
   logger.info(`API Gateway listening on port ${PORT}`);

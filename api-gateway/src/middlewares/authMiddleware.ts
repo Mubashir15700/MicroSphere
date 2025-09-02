@@ -6,7 +6,7 @@ export interface AuthenticatedRequest extends Request {
   user?: string | JwtPayload;
 }
 
-export function verifyToken(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+const verifyToken = (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   const authHeader = req.headers['authorization'];
   if (!authHeader) {
     return res.status(401).json({ message: 'Authorization header missing' });
@@ -25,4 +25,6 @@ export function verifyToken(req: AuthenticatedRequest, res: Response, next: Next
     req.user = decoded;
     next();
   });
-}
+};
+
+export default verifyToken;

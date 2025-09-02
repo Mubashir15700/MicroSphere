@@ -3,7 +3,7 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { JWT_SECRET } from '../config/envConfig';
 import { createUser, getUserByEmail } from '../services/userService';
-import { handleError } from '../utils/errorHandler';
+import handleError from '../utils/errorHandler';
 
 export const register = async (req: Request, res: Response) => {
   const { name, email, password } = req.body;

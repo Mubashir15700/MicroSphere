@@ -1,13 +1,29 @@
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
-import { Task } from '../models/taskModel';
+import { Channel } from 'amqplib';
+import Task from '../models/taskModel';
 import { getChannel, getQueueName } from '../services/rabbitmqService';
 import { getUserByID } from '../services/userService';
-import { logger } from '../utils/logger';
-import { handleError } from '../utils/errorHandler';
+import { AuthenticatedRequest } from '../middlewares/authMiddleware';
+import logger from '../utils/logger';
+import handleError from '../utils/errorHandler';
 
 const isValidObjectId = (id: string): boolean => {
   return mongoose.Types.ObjectId.isValid(id);
+};
+
+const sendToQueue = async (channel: Channel, message: any) => {
+  try {
+    await channel.sendToQueue(
+      getQueueName(),
+      Buffer.from(message),
+      { persistent: true } // Ensure message is not lost in case of failure
+    );
+    logger.info('Message sent to RabbitMQ');
+  } catch (error) {
+    logger.error('Error sending to RabbitMQ', error);
+    // Retry logic or send to a dead-letter queue
+  }
 };
 
 export const createTask = async (req: Request, res: Response) => {
@@ -32,19 +48,25 @@ export const createTask = async (req: Request, res: Response) => {
     await task.save();
 
     if (validAssigneeId) {
-      const channel = getChannel();
-      channel.sendToQueue(
-        getQueueName(),
-        Buffer.from(JSON.stringify({ taskId: task._id, assigneeId }))
-      );
-      logger.info('Message sent to RabbitMQ');
+      const message = {
+        taskId: task._id,
+        assigneeId,
+        action: 'create',
+      };
+
+      try {
+        const channel = getChannel();
+        await sendToQueue(channel, JSON.stringify(message));
+      } catch (rabbitmqError: any) {
+        logger.error(`RabbitMQ error during task creation: ${rabbitmqError.message}`);
+      }
     }
 
     res.status(201).json(task);
   } catch (error: any) {
     if (error.code === 11000) {
       // Duplicate key error
-      return res.status(400).json({ message: 'Task with this title already exists for the user.' });
+      return res.status(400).json({ message: 'Task with this title already exists.' });
     }
     handleError(res, error);
   }
@@ -59,7 +81,7 @@ export const getAllTasks = async (_req: Request, res: Response) => {
   }
 };
 
-export const getTasksByUser = async (req: any, res: Response) => {
+export const getTasksByUser = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { userId } = req.params;
 
@@ -67,7 +89,7 @@ export const getTasksByUser = async (req: any, res: Response) => {
       return res.status(400).json({ message: 'Invalid user ID' });
     }
 
-    if (req.user.role !== 'admin' && req.user.id !== userId) {
+    if (req.user && req.user.role !== 'admin' && req.user.id !== userId) {
       return res.status(403).json({ message: 'Access denied. Admins only.' });
     }
 
@@ -104,15 +126,32 @@ export const getTaskById = async (req: Request, res: Response) => {
   }
 };
 
-export const updateTask = async (req: any, res: Response) => {
+export const updateTask = async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const updates = req.body;
-    const allowedFields =
-      req.user.role === 'admin'
-        ? ['title', 'description', 'dueDate', 'status', 'assigneeId']
-        : ['status'];
-    const invalidFields = Object.keys(updates).filter(key => !allowedFields.includes(key));
+    const { id } = req.params;
 
+    if (!isValidObjectId(id)) {
+      return res.status(400).json({ message: 'Invalid task ID' });
+    }
+
+    const task = await Task.findById(id);
+    if (!task) {
+      return res.status(404).json({ message: 'Task not found' });
+    }
+
+    const isAdmin = req.user?.role === 'admin';
+    const isAssignee = task.assigneeId?.toString() === req.user?.id;
+
+    if (!isAdmin && !isAssignee) {
+      return res.status(403).json({ message: 'Access denied. You are not the assignee.' });
+    }
+
+    const allowedFields = isAdmin
+      ? ['title', 'description', 'dueDate', 'status', 'assigneeId']
+      : ['status'];
+
+    const updates = req.body;
+    const invalidFields = Object.keys(updates).filter(key => !allowedFields.includes(key));
     if (invalidFields.length > 0) {
       return res.status(400).json({ message: `Invalid fields: ${invalidFields.join(', ')}` });
     }
@@ -121,35 +160,42 @@ export const updateTask = async (req: any, res: Response) => {
       return res.status(400).json({ message: 'Invalid status value' });
     }
 
-    const { id } = req.params;
-
-    if (!isValidObjectId(id)) {
-      return res.status(400).json({ message: 'Invalid task ID' });
-    }
-
-    const task = await Task.findById(id);
-
-    if (!task) return res.status(404).json({ message: 'Task not found' });
-
-    // Only admin OR the assigned user can update
-    if (req.user.role !== 'admin') {
-      if (!task.assigneeId) {
-        return res.status(403).json({ message: 'Task is unassigned. Only admins can update.' });
+    // Apply allowed updates
+    allowedFields.forEach(field => {
+      if (updates[field] !== undefined) {
+        (task as any)[field] = updates[field];
       }
-
-      if (task.assigneeId.toString() !== req.user.id) {
-        return res.status(403).json({ message: 'Access denied. You are not the assignee.' });
-      }
-    }
-
-    Object.keys(updates).forEach(key => {
-      (task as any)[key] = updates[key];
     });
 
+    const wasAssigneeChanged =
+      isAdmin && updates.assigneeId && updates.assigneeId !== task.assigneeId?.toString();
+
     const updatedTask = await task.save();
+
+    // Send message to queue after successful save
+    if (wasAssigneeChanged) {
+      const assignee = await getUserByID(req, updates.assigneeId);
+      if (!assignee) {
+        return res.status(404).json({ message: 'Assignee not found' });
+      }
+
+      const message = {
+        taskId: task._id,
+        assigneeId: updates.assigneeId,
+        action: 'update',
+      };
+
+      try {
+        const channel = getChannel();
+        await sendToQueue(channel, JSON.stringify(message));
+      } catch (rabbitmqError: any) {
+        logger.error(`RabbitMQ error during task update: ${rabbitmqError.message}`);
+      }
+    }
+
     res.status(200).json({
       message: 'Task updated successfully',
-      task: updatedTask.toObject(),
+      task: updatedTask.toObject({ versionKey: false }),
     });
   } catch (error: any) {
     handleError(res, error);

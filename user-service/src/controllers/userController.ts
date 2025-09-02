@@ -1,8 +1,9 @@
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
 import bcrypt from 'bcrypt';
-import { User } from '../models/userModel';
-import { handleError } from '../utils/errorHandler';
+import User from '../models/userModel';
+import { AuthenticatedRequest } from '../middlewares/authMiddleware';
+import handleError from '../utils/errorHandler';
 
 const isValidObjectId = (id: string): boolean => {
   return mongoose.Types.ObjectId.isValid(id);
@@ -56,7 +57,7 @@ export const getAllUsers = async (_req: Request, res: Response) => {
   }
 };
 
-export const getUserById = async (req: any, res: Response) => {
+export const getUserById = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { id } = req.params;
 
@@ -64,7 +65,7 @@ export const getUserById = async (req: any, res: Response) => {
       return res.status(400).json({ message: 'Invalid user ID' });
     }
 
-    if (req.user.role !== 'admin' && req.user.id !== id) {
+    if (req.user && req.user.role !== 'admin' && req.user.id !== id) {
       return res.status(403).json({ message: 'Access denied. Admins only.' });
     }
 
@@ -79,7 +80,7 @@ export const getUserById = async (req: any, res: Response) => {
   }
 };
 
-export const updateUser = async (req: any, res: Response) => {
+export const updateUser = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { id } = req.params;
     const { name, email } = req.body;
@@ -88,7 +89,7 @@ export const updateUser = async (req: any, res: Response) => {
       return res.status(400).json({ message: 'Invalid user ID' });
     }
 
-    if (req.user.role !== 'admin' && req.user.id !== id) {
+    if (req.user && req.user.role !== 'admin' && req.user.id !== id) {
       return res.status(403).json({ message: 'Access denied. Admins only.' });
     }
 

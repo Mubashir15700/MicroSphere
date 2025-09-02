@@ -2,7 +2,7 @@ import request from 'supertest';
 import mongoose from 'mongoose';
 import jwt from 'jsonwebtoken';
 import app from '../src/app';
-import { User } from '../src/models/userModel';
+import User from '../src/models/userModel';
 import { MONGO_URI, SHARED_SECRET } from '../src/config/envConfig';
 
 describe('User Service', () => {

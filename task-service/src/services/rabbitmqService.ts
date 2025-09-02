@@ -5,12 +5,12 @@ import {
   RABBITMQ_RETRY_COUNT,
   RABBITMQ_RETRY_DELAY,
 } from '../config/envConfig';
-import { logger } from '../utils/logger';
+import logger from '../utils/logger';
 
 let connection: any | null = null;
 let channel: Channel | null = null;
 
-export async function connectToRabbitMQ() {
+export const connectToRabbitMQ = async () => {
   let retries = RABBITMQ_RETRY_COUNT;
 
   while (retries) {
@@ -27,13 +27,13 @@ export async function connectToRabbitMQ() {
       await new Promise(res => setTimeout(res, RABBITMQ_RETRY_DELAY));
     }
   }
-}
+};
 
-export function getChannel() {
+export const getChannel = () => {
   if (!channel) throw new Error('RabbitMQ channel is not initialized');
   return channel;
-}
+};
 
-export function getQueueName() {
+export const getQueueName = () => {
   return TASK_QUEUE_NAME;
-}
+};

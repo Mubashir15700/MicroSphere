@@ -1,7 +1,7 @@
 import express, { NextFunction, Request, Response } from 'express';
 import userRoutes from './routes/userRoutes';
-import { errorHandler } from './middlewares/errorMiddleware';
-import { logger } from './utils/logger';
+import errorHandler from './middlewares/errorMiddleware';
+import logger from './utils/logger';
 
 const app = express();
 

@@ -1,9 +1,9 @@
 import app from './app';
 import { PORT, MONGO_URI } from './config/envConfig';
 import { connectDB, disconnectDB } from './config/dbConfig';
-import { logger } from './utils/logger';
+import logger from './utils/logger';
 
-function handleGracefulShutdown(server: any) {
+const handleGracefulShutdown = (server: any) => {
   ['SIGINT', 'SIGTERM'].forEach(signal =>
     process.on(signal, async () => {
       logger.info(`${signal} received. Shutting down gracefully...`);
@@ -30,7 +30,7 @@ function handleGracefulShutdown(server: any) {
     logger.error('Uncaught Exception:', err);
     process.exit(1);
   });
-}
+};
 
 (async () => {
   try {
