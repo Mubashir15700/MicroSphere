@@ -1,7 +1,7 @@
 import amqp, { Channel } from 'amqplib';
 import {
   RABBITMQ_URL,
-  TASK_QUEUE_NAME,
+  USER_QUEUE_NAME,
   RABBITMQ_RETRY_COUNT,
   RABBITMQ_RETRY_DELAY,
 } from '../config/envConfig';
@@ -17,7 +17,7 @@ export const connectToRabbitMQ = async () => {
     try {
       connection = await amqp.connect(RABBITMQ_URL);
       channel = await connection.createChannel();
-      await channel!.assertQueue(TASK_QUEUE_NAME, { durable: true });
+      await channel!.assertQueue(USER_QUEUE_NAME, { durable: true });
       logger.info('Connected to RabbitMQ');
       break;
     } catch (err) {
@@ -35,5 +35,5 @@ export const getChannel = () => {
 };
 
 export const getQueueName = () => {
-  return TASK_QUEUE_NAME;
+  return USER_QUEUE_NAME;
 };

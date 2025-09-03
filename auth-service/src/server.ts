@@ -1,9 +1,18 @@
 import app from './app';
 import { PORT } from './config/envConfig';
+import { connectToRabbitMQ } from './services/rabbitmqService';
 import logger from './utils/logger';
 
-const server = app.listen(PORT, () => {
+const server = app.listen(PORT, async () => {
   logger.info(`Auth service listening on port ${PORT}`);
+
+  try {
+    await connectToRabbitMQ();
+    logger.info('Connected to RabbitMQ');
+  } catch (err) {
+    logger.error('Failed to connect to RabbitMQ', err);
+    process.exit(1);
+  }
 });
 
 ['SIGINT', 'SIGTERM'].forEach(signal =>

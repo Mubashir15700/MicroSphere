@@ -19,7 +19,7 @@ const sendToQueue = async (channel: Channel, message: any) => {
       Buffer.from(message),
       { persistent: true } // Ensure message is not lost in case of failure
     );
-    logger.info('Message sent to RabbitMQ');
+    logger.info(`Message sent to RabbitMQ: ${message}`);
   } catch (error) {
     logger.error('Error sending to RabbitMQ', error);
     // Retry logic or send to a dead-letter queue
@@ -49,7 +49,7 @@ export const createTask = async (req: Request, res: Response) => {
 
     if (validAssigneeId) {
       const message = {
-        taskId: task._id,
+        taskId: task.id,
         assigneeId,
         action: 'create',
       };

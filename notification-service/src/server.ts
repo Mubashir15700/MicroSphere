@@ -1,4 +1,4 @@
-import { QUEUE_NAME, RETRY_COUNT, RETRY_DELAY } from './config/rabbitmqConfig';
+import { QUEUE_NAMES, RETRY_COUNT, RETRY_DELAY } from './config/rabbitmqConfig';
 import { createRabbitMQConnection, createRabbitMQChannel } from './services/rabbitmqService';
 import startConsuming from './consumers/notificationConsumer';
 import logger from './utils/logger';
@@ -11,7 +11,9 @@ const connectRabbitMQ = async (retries = RETRY_COUNT, delay = RETRY_DELAY): Prom
 
       logger.info('Notification Service connected to RabbitMQ');
 
-      startConsuming(channel, QUEUE_NAME);
+      for (const queueName of QUEUE_NAMES) {
+        startConsuming(channel, queueName);
+      }
 
       return; // success, exit retry loop
     } catch (err: any) {

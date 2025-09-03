@@ -31,7 +31,7 @@ describe('Notification Consumer', () => {
 
     await startConsuming(mockChannel as Channel, queueName);
 
-    expect(mockChannel.assertQueue).toHaveBeenCalledWith(queueName);
+    expect(mockChannel.assertQueue).toHaveBeenCalledWith(queueName, { durable: true });
     expect(mockChannel.consume).toHaveBeenCalledWith(queueName, expect.any(Function));
 
     // Simulate a message coming in
@@ -42,7 +42,7 @@ describe('Notification Consumer', () => {
 
     consumeCallback(mockMsg);
 
-    expect(logger.info).toHaveBeenCalledWith('Received message:', 'Test message');
+    expect(logger.info).toHaveBeenCalledWith('Received message: Test message');
     expect(mockChannel.ack).toHaveBeenCalledWith(mockMsg);
   });
 
