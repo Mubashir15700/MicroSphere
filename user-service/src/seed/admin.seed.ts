@@ -24,7 +24,7 @@ const seedAdmin = async () => {
       logger.info('Admin already exists');
     }
   } catch (error: any) {
-    logger.error('Error seeding admin:', error.message);
+    logger.error(`Error seeding admin: ${error.message}`);
   } finally {
     await disconnectDB();
     process.exit(0);

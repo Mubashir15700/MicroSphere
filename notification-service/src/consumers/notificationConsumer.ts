@@ -28,7 +28,7 @@ const startConsuming = (channel: Channel, queueName: string) => {
       });
     })
     .catch(err => {
-      logger.error(`Error asserting queue "${queueName}":`, err);
+      logger.error(`Error asserting queue "${queueName}": ${err}`);
     });
 };
 

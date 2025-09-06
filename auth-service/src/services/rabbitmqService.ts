@@ -1,7 +1,7 @@
 import amqp, { Channel } from 'amqplib';
 import {
-  RABBITMQ_URL,
   USER_QUEUE_NAME,
+  RABBITMQ_URL,
   RABBITMQ_RETRY_COUNT,
   RABBITMQ_RETRY_DELAY,
 } from '../config/envConfig';
@@ -18,10 +18,9 @@ export const connectToRabbitMQ = async () => {
       connection = await amqp.connect(RABBITMQ_URL);
       channel = await connection.createChannel();
       await channel!.assertQueue(USER_QUEUE_NAME, { durable: true });
-      logger.info('Connected to RabbitMQ');
       break;
     } catch (err) {
-      logger.error('Could not connect to RabbitMQ', err);
+      logger.error(`Could not connect to RabbitMQ: ${err}`);
       retries--;
       logger.info(`Retries left: ${retries}`);
       await new Promise(res => setTimeout(res, RABBITMQ_RETRY_DELAY));

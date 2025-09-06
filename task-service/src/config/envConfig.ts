@@ -14,3 +14,10 @@ export const RABBITMQ_URL = process.env.RABBITMQ_URL || 'amqp://rabbitmq';
 export const TASK_QUEUE_NAME = process.env.TASK_QUEUE_NAME || 'taskQueue';
 export const RABBITMQ_RETRY_COUNT = parseInt(process.env.RABBITMQ_RETRY_COUNT || '5');
 export const RABBITMQ_RETRY_DELAY = parseInt(process.env.RABBITMQ_RETRY_DELAY || '5000');
+
+// Redis
+export const REDIS_URL =
+  process.env.NODE_ENV === 'test'
+    ? process.env.REDIS_URL_TEST || 'redis://localhost:6379'
+    : process.env.REDIS_URL || 'redis://redis:6379';
+export const REDIS_CACHE_TTL = parseInt(process.env.REDIS_CACHE_TTL || '3600');

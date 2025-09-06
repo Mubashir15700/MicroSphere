@@ -12,7 +12,7 @@ import {
 const router = Router();
 
 router.post('/', verifyToken, requireAdmin, createTask);
-router.get('/', verifyToken, requireAdmin, getAllTasks);
+router.get('/', verifyToken, getAllTasks);
 router.get('/user/:userId', verifyToken, getTasksByUser);
 router.get('/:id', verifyToken, getTaskById);
 router.put('/:id', verifyToken, updateTask);

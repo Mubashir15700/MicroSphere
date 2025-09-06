@@ -14,3 +14,10 @@ export const ADMIN_CREDENTIALS = {
   email: process.env.ADMIN_EMAIL || 'admin@example.com',
   password: process.env.ADMIN_PASSWORD || '12345@Qw',
 };
+
+// Redis
+export const REDIS_URL =
+  process.env.NODE_ENV === 'test'
+    ? process.env.REDIS_URL_TEST || 'redis://localhost:6379'
+    : process.env.REDIS_URL || 'redis://redis:6379';
+export const REDIS_CACHE_TTL = parseInt(process.env.REDIS_CACHE_TTL || '3600');

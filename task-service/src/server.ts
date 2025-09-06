@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import app from './app';
-import { connectToRabbitMQ } from './services/rabbitmqService';
+import connectToRabbitMQ from './services/rabbitmqService';
+import redisClient from './services/redisService';
 import { PORT, MONGO_URI } from './config/envConfig';
 import logger from './utils/logger';
 
@@ -10,7 +11,8 @@ const handleGracefulShutdown = (server: any) => {
       logger.info(`${signal} received. Shutting down gracefully...`);
       server.close(async () => {
         await mongoose.connection.close();
-        logger.info('MongoDB connection closed.');
+        await redisClient.close();
+        logger.info('MongoDB and Redis connection closed.');
         logger.info('Server closed.');
         process.exit(0);
       });
@@ -18,27 +20,38 @@ const handleGracefulShutdown = (server: any) => {
   );
 
   process.on('unhandledRejection', reason => {
-    logger.error('Unhandled Rejection:', reason);
+    logger.error(`Unhandled Rejection: ${reason}`);
   });
 
   process.on('uncaughtException', err => {
-    logger.error('Uncaught Exception:', err);
+    logger.error(`Uncaught Exception: ${err}`);
     process.exit(1);
   });
 };
 
 mongoose
   .connect(MONGO_URI)
-  .then(() => {
+  .then(async () => {
     logger.info('Connected to MongoDB');
+
+    try {
+      if (!redisClient.isOpen) {
+        await redisClient.connect();
+        logger.info('Connected to Redis');
+      }
+    } catch (err) {
+      logger.error(`Failed to connect to Redis: ${err}`);
+      process.exit(1);
+    }
 
     const server = app.listen(PORT, async () => {
       logger.info(`Task Service listening on port ${PORT}`);
+
       try {
         await connectToRabbitMQ();
         logger.info('Connected to RabbitMQ');
       } catch (err) {
-        logger.error('Failed to connect to RabbitMQ', err);
+        logger.error(`Failed to connect to RabbitMQ: ${err}`);
         process.exit(1);
       }
     });
@@ -46,6 +59,6 @@ mongoose
     handleGracefulShutdown(server);
   })
   .catch(err => {
-    logger.error('Could not connect to MongoDB', err);
+    logger.error(`Could not connect to MongoDB: ${err}`);
     process.exit(1);
   });

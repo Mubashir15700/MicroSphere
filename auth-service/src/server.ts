@@ -10,7 +10,7 @@ const server = app.listen(PORT, async () => {
     await connectToRabbitMQ();
     logger.info('Connected to RabbitMQ');
   } catch (err) {
-    logger.error('Failed to connect to RabbitMQ', err);
+    logger.error(`Failed to connect to RabbitMQ: ${err}`);
     process.exit(1);
   }
 });
@@ -27,10 +27,10 @@ const server = app.listen(PORT, async () => {
 
 // Optional: Handle unexpected crashes
 process.on('unhandledRejection', reason => {
-  logger.error('Unhandled Rejection:', reason);
+  logger.error(`Unhandled Rejection: ${reason}`);
 });
 
 process.on('uncaughtException', err => {
-  logger.error('Uncaught Exception:', err);
+  logger.error(`Uncaught Exception: ${err}`);
   process.exit(1);
 });

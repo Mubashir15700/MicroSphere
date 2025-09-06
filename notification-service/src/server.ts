@@ -18,7 +18,7 @@ const connectRabbitMQ = async (retries = RETRY_COUNT, delay = RETRY_DELAY): Prom
       return; // success, exit retry loop
     } catch (err: any) {
       logger.error(`Failed to connect to RabbitMQ. Retries left: ${retries}`);
-      logger.error('Reason:', err.message);
+      logger.error(`Reason: ${err.message}`);
       retries -= 1;
 
       if (retries === 0) {

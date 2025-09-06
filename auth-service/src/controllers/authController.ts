@@ -17,7 +17,7 @@ const sendAdminNotification = async (channel: Channel, message: any) => {
     );
     logger.info(`Message sent to RabbitMQ: ${message}`);
   } catch (error) {
-    logger.error('Error sending to RabbitMQ', error);
+    logger.error(`Error sending to RabbitMQ: ${error}`);
     // Retry logic or send to a dead-letter queue
   }
 };

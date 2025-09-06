@@ -18,10 +18,10 @@ const server = app.listen(PORT, () => {
 
 // Optional: Handle unexpected crashes
 process.on('unhandledRejection', reason => {
-  logger.error('Unhandled Rejection:', reason);
+  logger.error(`Unhandled Rejection: ${reason}`);
 });
 
 process.on('uncaughtException', err => {
-  logger.error('Uncaught Exception:', err);
+  logger.error(`Uncaught Exception: ${err}`);
   process.exit(1);
 });

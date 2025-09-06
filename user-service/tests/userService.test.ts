@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 import jwt from 'jsonwebtoken';
 import app from '../src/app';
 import User from '../src/models/userModel';
+import redisClient from '../src/services/redisService';
 import { MONGO_URI, SHARED_SECRET } from '../src/config/envConfig';
 
 describe('User Service', () => {
@@ -17,6 +18,9 @@ describe('User Service', () => {
 
   beforeAll(async () => {
     await mongoose.connect(MONGO_URI);
+    if (!redisClient.isOpen) {
+      await redisClient.connect();
+    }
   });
 
   beforeEach(async () => {
@@ -27,6 +31,7 @@ describe('User Service', () => {
 
   afterAll(async () => {
     await mongoose.connection.close();
+    await redisClient.disconnect();
   });
 
   afterEach(async () => {
