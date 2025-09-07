@@ -7,7 +7,7 @@ const router = Router();
 
 const errorHandler = (service: string) => ({
   error: (err: any, _req: any, res: any) => {
-    logger.error(`${service} proxy error:`, err.message);
+    logger.error(`${service} proxy error: ${err.message}`);
     (res as Response).status(500).json({ message: `${service} proxy error` });
   },
 });

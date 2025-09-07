@@ -1,4 +1,5 @@
 import app from './app';
+import redisClient from './services/redisService';
 import { PORT, MONGO_URI } from './config/envConfig';
 import { connectDB, disconnectDB } from './config/dbConfig';
 import logger from './utils/logger';
@@ -10,9 +11,10 @@ const handleGracefulShutdown = (server: any) => {
 
       try {
         await disconnectDB();
-        logger.info('MongoDB connection closed.');
+        await redisClient.close();
+        logger.info('MongoDB and Redis connection closed.');
       } catch (err) {
-        logger.error('Error closing MongoDB connection:', err);
+        logger.error(`Error closing MongoDB and Redis connection: ${err}`);
       }
 
       server.close(() => {
@@ -23,11 +25,11 @@ const handleGracefulShutdown = (server: any) => {
   );
 
   process.on('unhandledRejection', reason => {
-    logger.error('Unhandled Rejection:', reason);
+    logger.error(`Unhandled Rejection: ${reason}`);
   });
 
   process.on('uncaughtException', err => {
-    logger.error('Uncaught Exception:', err);
+    logger.error(`Uncaught Exception: ${err}`);
     process.exit(1);
   });
 };
@@ -36,13 +38,23 @@ const handleGracefulShutdown = (server: any) => {
   try {
     await connectDB(MONGO_URI);
 
+    try {
+      if (!redisClient.isOpen) {
+        await redisClient.connect();
+        logger.info('Connected to Redis');
+      }
+    } catch (err) {
+      logger.error(`Failed to connect to Redis: ${err}`);
+      process.exit(1);
+    }
+
     const server = app.listen(PORT, () => {
       logger.info(`User service listening on port ${PORT}`);
     });
 
     handleGracefulShutdown(server);
   } catch (err) {
-    logger.error('Failed to connect to MongoDB', err);
+    logger.error(`Failed to connect to MongoDB: ${err}`);
     process.exit(1); // Exit process so container/orchestrator restarts it
   }
 })();

@@ -1,8 +1,21 @@
+// MOCK BEFORE ANYTHING ELSE THAT IMPORTS redisService
+jest.mock('../src/services/redisService', () => ({
+  __esModule: true,
+  default: {
+    connect: jest.fn(),
+    close: jest.fn(),
+    isOpen: true,
+    get: jest.fn(),
+    set: jest.fn(),
+  },
+}));
+
 import request from 'supertest';
 import mongoose from 'mongoose';
 import jwt from 'jsonwebtoken';
 import app from '../src/app';
 import User from '../src/models/userModel';
+import redisClient from '../src/services/redisService';
 import { MONGO_URI, SHARED_SECRET } from '../src/config/envConfig';
 
 describe('User Service', () => {
@@ -17,6 +30,9 @@ describe('User Service', () => {
 
   beforeAll(async () => {
     await mongoose.connect(MONGO_URI);
+    if (!redisClient.isOpen) {
+      await redisClient.connect();
+    }
   });
 
   beforeEach(async () => {
@@ -27,10 +43,14 @@ describe('User Service', () => {
 
   afterAll(async () => {
     await mongoose.connection.close();
+    if (redisClient.isOpen) {
+      await redisClient.close();
+    }
   });
 
   afterEach(async () => {
     await User.deleteMany({});
+    jest.clearAllMocks();
   });
 
   describe('POST /', () => {

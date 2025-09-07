@@ -23,6 +23,7 @@
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.18.0",
+    "redis": "^5.8.2",
     "winston": "^3.17.0"
   },
   "devDependencies": {

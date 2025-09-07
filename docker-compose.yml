@@ -14,6 +14,20 @@ services:
       - "5672:5672" # RabbitMQ server
       - "15672:15672" # Management UI
 
+  redis:
+    image: redis:6
+    container_name: redis-server
+    ports:
+      - "6379:6379"
+    command:
+      [
+        "redis-server",
+        "--maxmemory",
+        "256mb",
+        "--maxmemory-policy",
+        "allkeys-lru",
+      ]
+
   api-gateway:
     build: ./api-gateway
     container_name: api-gateway
@@ -33,6 +47,7 @@ services:
       - "3001:3001"
     depends_on:
       - user-service
+      - rabbitmq
     volumes:
       - ./auth-service:/app
       - /app/node_modules
@@ -44,6 +59,7 @@ services:
       - "3002:3002"
     depends_on:
       - mongo
+      - redis
     volumes:
       - ./user-service:/app
       - /app/node_modules
@@ -56,6 +72,7 @@ services:
     depends_on:
       - mongo
       - rabbitmq
+      - redis
     volumes:
       - ./task-service:/app
       - /app/node_modules

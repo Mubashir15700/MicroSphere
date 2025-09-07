@@ -2,11 +2,13 @@ import { Request, Response } from 'express';
 import mongoose from 'mongoose';
 import { Channel } from 'amqplib';
 import Task from '../models/taskModel';
+import { REDIS_CACHE_TTL } from '../config/envConfig';
 import { getChannel, getQueueName } from '../services/rabbitmqService';
+import redisClient from '../services/redisService';
 import { getUserByID } from '../services/userService';
 import { AuthenticatedRequest } from '../middlewares/authMiddleware';
-import logger from '../utils/logger';
 import handleError from '../utils/errorHandler';
+import logger from '../utils/logger';
 
 const isValidObjectId = (id: string): boolean => {
   return mongoose.Types.ObjectId.isValid(id);
@@ -19,10 +21,19 @@ const sendToQueue = async (channel: Channel, message: any) => {
       Buffer.from(message),
       { persistent: true } // Ensure message is not lost in case of failure
     );
-    logger.info('Message sent to RabbitMQ');
+    logger.info(`Message sent to RabbitMQ: ${message}`);
   } catch (error) {
-    logger.error('Error sending to RabbitMQ', error);
+    logger.error(`Error sending to RabbitMQ: ${error}`);
     // Retry logic or send to a dead-letter queue
+  }
+};
+
+const clearCache = async () => {
+  try {
+    await redisClient.del('tasks:all');
+    logger.info('Task cache cleared');
+  } catch (err) {
+    logger.error(`Failed to clear task cache: ${err}`);
   }
 };
 
@@ -49,7 +60,7 @@ export const createTask = async (req: Request, res: Response) => {
 
     if (validAssigneeId) {
       const message = {
-        taskId: task._id,
+        taskId: task.id,
         assigneeId,
         action: 'create',
       };
@@ -61,6 +72,8 @@ export const createTask = async (req: Request, res: Response) => {
         logger.error(`RabbitMQ error during task creation: ${rabbitmqError.message}`);
       }
     }
+
+    clearCache();
 
     res.status(201).json(task);
   } catch (error: any) {
@@ -74,7 +87,26 @@ export const createTask = async (req: Request, res: Response) => {
 
 export const getAllTasks = async (_req: Request, res: Response) => {
   try {
+    const cacheKey = 'tasks:all';
+
+    try {
+      const cachedTasks = await redisClient.get(cacheKey);
+      if (cachedTasks) {
+        logger.info('Returning tasks from cache');
+        return res.json(JSON.parse(cachedTasks));
+      }
+    } catch (err) {
+      logger.warn(`Redis get failed — continuing without cache: ${err}`);
+    }
+
     const tasks = await Task.find();
+
+    try {
+      await redisClient.setEx(cacheKey, REDIS_CACHE_TTL, JSON.stringify(tasks));
+    } catch (err) {
+      logger.warn(`Redis setEx failed — skipping cache set: ${err}`);
+    }
+
     res.json(tasks);
   } catch (error: any) {
     handleError(res, error);
@@ -193,6 +225,8 @@ export const updateTask = async (req: AuthenticatedRequest, res: Response) => {
       }
     }
 
+    clearCache();
+
     res.status(200).json({
       message: 'Task updated successfully',
       task: updatedTask.toObject({ versionKey: false }),
@@ -216,12 +250,18 @@ export const deleteTasks = async (req: Request, res: Response) => {
       if (!result) {
         return res.status(404).json({ message: 'Task not found' });
       }
+
+      clearCache();
+
       return res.status(200).json({ message: 'Task deleted successfully' });
     } else {
       const deleteResult = await Task.deleteMany({});
       if (deleteResult.deletedCount === 0) {
         return res.status(404).json({ message: 'No tasks found to delete' });
       }
+
+      clearCache();
+
       return res
         .status(200)
         .json({ message: `${deleteResult.deletedCount} tasks have been deleted.` });

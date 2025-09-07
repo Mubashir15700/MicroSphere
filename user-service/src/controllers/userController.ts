@@ -2,11 +2,23 @@ import { Request, Response } from 'express';
 import mongoose from 'mongoose';
 import bcrypt from 'bcrypt';
 import User from '../models/userModel';
+import { REDIS_CACHE_TTL } from '../config/envConfig';
+import redisClient from '../services/redisService';
 import { AuthenticatedRequest } from '../middlewares/authMiddleware';
 import handleError from '../utils/errorHandler';
+import logger from '../utils/logger';
 
 const isValidObjectId = (id: string): boolean => {
   return mongoose.Types.ObjectId.isValid(id);
+};
+
+const clearCache = async () => {
+  try {
+    await redisClient.del('users:all');
+    logger.info('User cache cleared');
+  } catch (err) {
+    logger.error('Failed to clear user cache:', err);
+  }
 };
 
 export const createUser = async (req: Request, res: Response) => {
@@ -27,6 +39,8 @@ export const createUser = async (req: Request, res: Response) => {
     });
 
     await user.save();
+
+    clearCache();
 
     res.status(201).json({ id: user._id, name: user.name, email: user.email });
   } catch (error: any) {
@@ -50,7 +64,26 @@ export const getUserByEmail = async (req: Request, res: Response) => {
 
 export const getAllUsers = async (_req: Request, res: Response) => {
   try {
+    const cacheKey = 'users:all';
+
+    try {
+      const cachedUsers = await redisClient.get(cacheKey);
+      if (cachedUsers) {
+        logger.info('Returning users from cache');
+        return res.json(JSON.parse(cachedUsers));
+      }
+    } catch (err) {
+      logger.warn(`Redis get failed — continuing without cache: ${err}`);
+    }
+
     const users = await User.find().select('-password');
+
+    try {
+      await redisClient.setEx(cacheKey, REDIS_CACHE_TTL, JSON.stringify(users));
+    } catch (err) {
+      logger.warn(`Redis setEx failed — skipping cache set: ${err}`);
+    }
+
     res.json(users);
   } catch (error: any) {
     handleError(res, error);
@@ -108,6 +141,8 @@ export const updateUser = async (req: AuthenticatedRequest, res: Response) => {
 
     await user.save();
 
+    clearCache();
+
     res.status(200).json({ message: 'User updated successfully' });
   } catch (error: any) {
     handleError(res, error);
@@ -127,6 +162,9 @@ export const deleteUsers = async (req: Request, res: Response) => {
       if (!user) {
         return res.status(404).json({ message: 'User not found' });
       }
+
+      clearCache();
+
       return res.status(200).json({ message: 'User deleted successfully' });
     }
 
@@ -138,6 +176,8 @@ export const deleteUsers = async (req: Request, res: Response) => {
     if (result.deletedCount === 0) {
       return res.status(404).json({ message: 'No users found to delete' });
     }
+
+    clearCache();
 
     res.status(200).json({ message: `${result.deletedCount} users have been deleted.` });
   } catch (error: any) {
