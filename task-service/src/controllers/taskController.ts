@@ -89,17 +89,23 @@ export const getAllTasks = async (_req: Request, res: Response) => {
   try {
     const cacheKey = 'tasks:all';
 
-    const cachedTasks = await redisClient.get(cacheKey);
-    if (cachedTasks) {
-      logger.info('Returning tasks from cache');
-      return res.json(JSON.parse(cachedTasks));
+    try {
+      const cachedTasks = await redisClient.get(cacheKey);
+      if (cachedTasks) {
+        logger.info('Returning tasks from cache');
+        return res.json(JSON.parse(cachedTasks));
+      }
+    } catch (err) {
+      logger.warn(`Redis get failed — continuing without cache: ${err}`);
     }
-
-    logger.info('Fetching tasks from database');
 
     const tasks = await Task.find();
 
-    await redisClient.setEx(cacheKey, REDIS_CACHE_TTL, JSON.stringify(tasks));
+    try {
+      await redisClient.setEx(cacheKey, REDIS_CACHE_TTL, JSON.stringify(tasks));
+    } catch (err) {
+      logger.warn(`Redis setEx failed — skipping cache set: ${err}`);
+    }
 
     res.json(tasks);
   } catch (error: any) {

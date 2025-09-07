@@ -4,6 +4,7 @@ import logger from '../utils/logger';
 
 const redisClient = createClient({
   url: REDIS_URL,
+  disableOfflineQueue: true,
 });
 
 redisClient.on('error', err => {

@@ -66,17 +66,23 @@ export const getAllUsers = async (_req: Request, res: Response) => {
   try {
     const cacheKey = 'users:all';
 
-    const cachedUsers = await redisClient.get(cacheKey);
-    if (cachedUsers) {
-      logger.info('Returning users from cache');
-      return res.json(JSON.parse(cachedUsers));
+    try {
+      const cachedUsers = await redisClient.get(cacheKey);
+      if (cachedUsers) {
+        logger.info('Returning users from cache');
+        return res.json(JSON.parse(cachedUsers));
+      }
+    } catch (err) {
+      logger.warn(`Redis get failed — continuing without cache: ${err}`);
     }
-
-    logger.info('Fetching users from database');
 
     const users = await User.find().select('-password');
 
-    await redisClient.setEx(cacheKey, REDIS_CACHE_TTL, JSON.stringify(users));
+    try {
+      await redisClient.setEx(cacheKey, REDIS_CACHE_TTL, JSON.stringify(users));
+    } catch (err) {
+      logger.warn(`Redis setEx failed — skipping cache set: ${err}`);
+    }
 
     res.json(users);
   } catch (error: any) {
