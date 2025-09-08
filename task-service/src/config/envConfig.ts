@@ -10,8 +10,8 @@ export const JWT_SECRET = process.env.JWT_SECRET || 'jwt_secret_key';
 export const USER_SERVICE_URL = process.env.USER_SERVICE_URL || 'http://user-service:3002';
 
 // RabbitMQ
-export const RABBITMQ_URL = process.env.RABBITMQ_URL || 'amqp://rabbitmq';
 export const TASK_QUEUE_NAME = process.env.TASK_QUEUE_NAME || 'taskQueue';
+export const RABBITMQ_URL = process.env.RABBITMQ_URL || 'amqp://rabbitmq';
 export const RABBITMQ_RETRY_COUNT = parseInt(process.env.RABBITMQ_RETRY_COUNT || '5');
 export const RABBITMQ_RETRY_DELAY = parseInt(process.env.RABBITMQ_RETRY_DELAY || '5000');
 

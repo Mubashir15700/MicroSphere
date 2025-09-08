@@ -1,6 +1,7 @@
 import { Router, Response } from 'express';
 import { createProxyMiddleware } from 'http-proxy-middleware';
 import verifyToken from '../middlewares/authMiddleware';
+import { AUTH_SERVICE_URL, USER_SERVICE_URL, TASK_SERVICE_URL } from '../config/envConfig';
 import logger from '../utils/logger';
 
 const router = Router();
@@ -15,19 +16,19 @@ const errorHandler = (service: string) => ({
 const targetRoutes = [
   {
     path: '/auth',
-    target: 'http://auth-service:3001',
+    target: AUTH_SERVICE_URL,
     authRequired: false,
     name: 'Auth service',
   },
   {
     path: '/users',
-    target: 'http://user-service:3002',
+    target: USER_SERVICE_URL,
     authRequired: true,
     name: 'User service',
   },
   {
     path: '/tasks',
-    target: 'http://task-service:3003',
+    target: TASK_SERVICE_URL,
     authRequired: true,
     name: 'Task service',
   },
