@@ -26,7 +26,8 @@ This project demonstrates a complete **Node.js microservices** architecture usin
 - **Docker & Docker Compose**
 - **http-proxy-middleware** for API Gateway
 - **ts-node-dev** for dev mode hot-reload
-
+- **Swagger** for API documentation
+- **Husky** for Git hooks (formatting, linting, testing before commits)
 ---
 
 ## 📁 Project Structure
@@ -68,3 +69,40 @@ This will:
 - Build each service
 - Start MongoDB and RabbitMQ
 - Run each microservice with hot-reload enabled
+
+---
+
+## 🧰 Developer Tooling
+
+### ✅ Husky Git Hooks
+
+Husky is configured at the root level to automatically run:
+
+- `npm run format`
+- `npm run lint`
+- `npm run test`
+
+…before every commit, ensuring code quality and consistency across all services.
+
+To enable Husky after cloning the repo:
+
+```bash
+npm install
+npx husky init
+```
+
+---
+
+## 📚 API Docs
+
+Each microservice exposes its own Swagger documentation, making it easy to explore and test the APIs directly from the browser.
+
+### 🔗 Access Swagger UI
+
+Once all services are up (via Docker), visit the following URLs in your browser:
+
+- **Auth Service** -	http://localhost:3001/api-docs
+- **User Service** -	http://localhost:3002/api-docs
+- **Task Service** -	http://localhost:3003/api-docs
+
+⚠️ Ensure the services are running with docker-compose up before accessing these URLs.
