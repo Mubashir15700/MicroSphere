@@ -1,4 +1,6 @@
 import express, { NextFunction, Request, Response } from 'express';
+import swaggerUi from 'swagger-ui-express';
+import swaggerSpec from './docs/swagger';
 import bodyParser from 'body-parser';
 import taskRoutes from './routes/taskRoutes';
 import errorHandler from './middlewares/errorMiddleware';
@@ -13,6 +15,8 @@ app.use((req: Request, _res: Response, next: NextFunction) => {
   logger.info(`${req.method} ${req.originalUrl}`);
   next();
 });
+
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 app.use(taskRoutes);
 
