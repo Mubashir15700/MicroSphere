@@ -1,0 +1,32 @@
+#!/bin/sh
+
+echo "🔍 Running pre-commit checks..."
+
+# Get all staged files
+staged_files=$(git diff --cached --name-only)
+
+# Define the services
+services=("api-gateway" "auth-service" "client" "notification-service" "task-service" "user-service")
+
+# Loop through services and check if any staged file is inside them
+for service in "${services[@]}"; do
+  if echo "$staged_files" | grep -q "^$service/"; then
+    echo "🔧 Running checks in $service..."
+    cd "$service"
+
+    if [ -f "package.json" ]; then
+      echo "🎯 npm run format"
+      npm run format || exit 1
+
+      echo "🧹 npm run lint"
+      npm run lint || exit 1
+
+      echo "🧪 npm run test"
+      npm run test || exit 1
+    fi
+
+    cd ..
+  fi
+done
+
+echo "✅ All checks passed!"

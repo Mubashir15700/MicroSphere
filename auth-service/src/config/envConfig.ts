@@ -11,3 +11,5 @@ export const RABBITMQ_URL = process.env.RABBITMQ_URL || 'amqp://rabbitmq';
 export const USER_QUEUE_NAME = process.env.USER_QUEUE_NAME || 'userQueue';
 export const RABBITMQ_RETRY_COUNT = parseInt(process.env.RABBITMQ_RETRY_COUNT || '5');
 export const RABBITMQ_RETRY_DELAY = parseInt(process.env.RABBITMQ_RETRY_DELAY || '5000');
+
+export const SWAGGER_SERVER_URL = process.env.SWAGGER_SERVER_URL || `http://localhost:${PORT}`;

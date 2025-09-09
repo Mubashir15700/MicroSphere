@@ -30,9 +30,6 @@ This project demonstrates a complete Node.js microservices architecture using Ty
 - **Docker & Docker Compose**
 - **http-proxy-middleware** for API Gateway
 - **ts-node-dev** for dev mode hot-reload
-- **Jest** for unit and integration testing across:
-  - All API services (`auth`, `user`, `task`, `notification`)
-  - The client (Next.js frontend)
 
 ---
 
@@ -74,6 +71,6 @@ cd nodejs-microservices
 
 This will:
 
-- Build and start all backend services
-- Launch MongoDB, Redis, and RabbitMQ containers
-- Enable hot-reloading for development
+- Build each service
+- Start MongoDB and RabbitMQ
+- Run each microservice with hot-reload enabled
