@@ -89,5 +89,16 @@ services:
       - ./notification-service:/app
       - /app/node_modules
 
+  client:
+    build: ./client
+    container_name: nextjs-client
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./client:/app
+      - /app/node_modules
+    depends_on:
+      - api-gateway
+
 volumes:
   mongo-data:

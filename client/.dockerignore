@@ -1,0 +1,21 @@
+# Node modules
+node_modules
+
+# Logs
+logs
+*.log
+
+# Environment files
+.env
+
+# Git
+.git
+.gitignore
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Test coverage / build outputs
+coverage
+dist

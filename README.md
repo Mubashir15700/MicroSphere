@@ -53,15 +53,20 @@ Services communicate through REST APIs and asynchronous messaging via RabbitMQ. 
 ---
 
 ## 📁 Project Structure
+
 ```
+├── .github/                # 🐙 GitHub Actions/CI workflows
+├── .husky/                 # ⚙️ Git hooks for pre-commit, pre-push
 ├── api-gateway/            # 🚪 Centralized routing & auth handling
 ├── auth-service/           # 🔐 Handles registration, login, and JWT
 ├── client/                 # 🖥️ Next.js frontend (Zustand, WIP)
-├── user-service/           # 👤 User data (MongoDB + Redis)
 ├── notification-service/   # 📣 RabbitMQ consumer for notifications
 ├── task-service/           # ✅ Task management (MongoDB + Redis)
-├── docker-compose.yml      # 🐳 Docker orchestration
+├── user-service/           # 👤 User data (MongoDB + Redis)
 ├── .gitignore              # 🚫 Git ignore rules
+├── docker-compose.yml      # 🐳 Docker orchestration
+├── package-lock.json       # 🔒 Lock file for dependency versions
+├── package.json            # 📦 Project dependencies & Husky configurations
 └── README.md               # 📘 Project overview
 ```
 
@@ -87,7 +92,7 @@ cd nodejs-microservices
 
 2. **Start All Services**
 
-```docker-compose up --build```
+`docker-compose up --build`
 
 This will:
 
@@ -95,3 +100,17 @@ This will:
 - 🐳 Start MongoDB, Redis, and RabbitMQ containers
 - 🚀 Launch all backend services with hot-reload enabled via ts-node-dev
 - 🌐 Expose APIs through the API Gateway
+
+---
+
+## 📄 Swagger API Documentation
+
+Each backend service exposes Swagger UI for exploring and testing APIs.
+
+ℹ️ Swagger docs are available once all services are running via docker-compose up.
+
+Service Swagger URL:
+
+- **Auth Service** - http://localhost:3001/api-docs
+- **User Service** - http://localhost:3002/api-docs
+- **Task Service** - http://localhost:3003/api-docs
