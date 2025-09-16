@@ -50,7 +50,7 @@ export default function UserDashboard() {
             All Tasks
           </Button>
         </Link>
-        <Link href="/profile" className='ml-5'>
+        <Link href="/profile" className="ml-5">
           <Button size="icon" variant="outline">
             <User className="h-8 w-8 text-gray-600 dark:text-gray-300" />
           </Button>
