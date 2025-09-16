@@ -99,13 +99,6 @@
 
 /**
  * @swagger
- * tags:
- *   name: User
- *   description: API endpoints for managing users
- */
-
-/**
- * @swagger
  * /:
  *   get:
  *     summary: Retrieve all users
@@ -174,6 +167,39 @@
  *         description: Invalid user ID
  *       403:
  *         description: Access denied. Admins only or the user themselves can access this endpoint.
+ *       404:
+ *         description: User not found
+ *       500:
+ *         description: Server error or internal processing failure
+ */
+
+/**
+ * @swagger
+ * /profile:
+ *   get:
+ *     summary: Retrieve logged in user details
+ *     tags: [User]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved the user
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: string
+ *                   description: The unique ID of the user.
+ *                 name:
+ *                   type: string
+ *                   description: The name of the user.
+ *                 email:
+ *                   type: string
+ *                   description: The email of the user.
+ *       401:
+ *         description: Unauthorized
  *       404:
  *         description: User not found
  *       500:

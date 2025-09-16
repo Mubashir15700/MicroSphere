@@ -12,6 +12,10 @@ const isValidObjectId = (id: string): boolean => {
   return mongoose.Types.ObjectId.isValid(id);
 };
 
+const hasAccess = (reqUser: { id: string; role: string }, targetId: string) => {
+  return reqUser.role === 'admin' || reqUser.id === targetId;
+};
+
 const clearCache = async () => {
   try {
     await redisClient.del('users:all');
@@ -98,7 +102,7 @@ export const getUserById = async (req: AuthenticatedRequest, res: Response) => {
       return res.status(400).json({ message: 'Invalid user ID' });
     }
 
-    if (req.user && req.user.role !== 'admin' && req.user.id !== id) {
+    if (!hasAccess(req.user!, id)) {
       return res.status(403).json({ message: 'Access denied. Admins only.' });
     }
 
@@ -113,6 +117,26 @@ export const getUserById = async (req: AuthenticatedRequest, res: Response) => {
   }
 };
 
+export const getProfile = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    const user = await User.findById(userId).select('-password');
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    return res.status(200).json(user);
+  } catch (error) {
+    handleError(res, error);
+  }
+};
+
 export const updateUser = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { id } = req.params;
@@ -122,7 +146,7 @@ export const updateUser = async (req: AuthenticatedRequest, res: Response) => {
       return res.status(400).json({ message: 'Invalid user ID' });
     }
 
-    if (req.user && req.user.role !== 'admin' && req.user.id !== id) {
+    if (!hasAccess(req.user!, id)) {
       return res.status(403).json({ message: 'Access denied. Admins only.' });
     }
 

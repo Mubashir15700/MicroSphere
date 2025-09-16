@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { User } from 'lucide-react'; // Import the icon
 import { Button } from '@/components/ui/button';
 
 interface Task {
@@ -42,11 +43,16 @@ export default function UserDashboard() {
 
   return (
     <div className="mx-auto mt-10 max-w-3xl rounded-md bg-white p-6 shadow-md dark:bg-gray-800">
-      {/* Navigator button */}
+      {/* Navigator buttons */}
       <div className="mb-6 flex justify-end">
         <Link href="/tasks">
           <Button size="sm" variant="outline">
             All Tasks
+          </Button>
+        </Link>
+        <Link href="/profile" className='ml-5'>
+          <Button size="icon" variant="outline">
+            <User className="h-8 w-8 text-gray-600 dark:text-gray-300" />
           </Button>
         </Link>
       </div>

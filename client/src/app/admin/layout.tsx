@@ -10,6 +10,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { href: '/admin/dashboard', label: 'Dashboard' },
     { href: '/admin/users', label: 'Users' },
     { href: '/admin/tasks', label: 'Tasks' },
+    { href: '/admin/profile', label: 'Profile' },
   ];
 
   return (
