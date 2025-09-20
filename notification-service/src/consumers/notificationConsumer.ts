@@ -1,5 +1,5 @@
 import { Channel, ConsumeMessage } from 'amqplib';
-import prisma from '../prisma';
+import { createNotification } from '../services/notificationService';
 import logger from '../utils/logger';
 
 const startConsuming = (channel: Channel, queueName: string) => {
@@ -10,36 +10,31 @@ const startConsuming = (channel: Channel, queueName: string) => {
       channel.consume(queueName, async (msg: ConsumeMessage | null) => {
         if (!msg) return;
 
-        const message = msg.content.toString();
-        logger.info(`Received message: ${message}`);
+        const raw = msg.content.toString();
+        logger.info(`Received message: ${raw}`);
 
-        // Process the message here (e.g., send notification, update DB, etc.)
-        switch (queueName) {
-          case 'taskQueue':
-            // Handle taskQueue message
-            await prisma.notification.create({
-              data: {
-                userId: JSON.parse(message).userId || '',
-                message: JSON.parse(message).message || '',
-                type: 'task',
-              },
-            });
-            break;
-          case 'userQueue':
-            // Handle userQueue message
-            await prisma.notification.create({
-              data: {
-                userId: JSON.parse(message).userId || '',
-                message: JSON.parse(message).message || '',
-                type: 'user',
-              },
-            });
-            break;
-          default:
-            logger.info(`No handler defined for queue: ${queueName}`);
+        let data;
+        try {
+          data = JSON.parse(raw);
+        } catch (err) {
+          logger.error(`Invalid JSON format: ${err}`);
+          return channel.nack(msg, false, false); // Don't requeue malformed messages
         }
 
-        channel.ack(msg);
+        const { userId = '', message: msgText = '' } = data;
+
+        if (!userId || !msgText) {
+          logger.warn(`Missing userId or message in payload: ${raw}`);
+          return channel.nack(msg, false, false);
+        }
+
+        try {
+          await createNotification(userId, msgText, queueName === 'taskQueue' ? 'task' : 'user');
+          channel.ack(msg);
+        } catch (err) {
+          logger.error(`Failed to create notification: ${err}`);
+          channel.nack(msg, false, false); // Optionally requeue
+        }
       });
     })
     .catch(err => {

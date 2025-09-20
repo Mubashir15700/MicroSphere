@@ -27,21 +27,6 @@ const handleGracefulShutdown = (server: any) => {
   });
 };
 
-// mongoose
-//   .connect(MONGO_URI)
-//   .then(async () => {
-//     logger.info('Connected to MongoDB');
-
-//     try {
-//       if (!redisClient.isOpen) {
-//         await redisClient.connect();
-//         logger.info('Connected to Redis');
-//       }
-//     } catch (err) {
-//       logger.error(`Failed to connect to Redis: ${err}`);
-//       process.exit(1);
-//     }
-
 const server = app.listen(PORT, async () => {
   logger.info(`Notification Service listening on port ${PORT}`);
 
@@ -55,8 +40,3 @@ const server = app.listen(PORT, async () => {
 });
 
 handleGracefulShutdown(server);
-// })
-// .catch(err => {
-//   logger.error(`Could not connect to MongoDB: ${err}`);
-//   process.exit(1);
-// });

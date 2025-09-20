@@ -1,41 +1,16 @@
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
-import { Channel } from 'amqplib';
 import Task from '../models/taskModel';
 import { REDIS_CACHE_TTL } from '../config/envConfig';
-import { getChannel, getQueueName } from '../services/rabbitmqService';
+import { getChannel } from '../services/rabbitmqService';
 import redisClient from '../services/redisService';
 import { getUserByID } from '../services/userService';
+import sendToQueue from '../producers/queuePublisher';
 import { AuthenticatedRequest } from '../middlewares/authMiddleware';
 import handleError from '../utils/errorHandler';
+import clearCache from '../utils/cache';
+import { isValidObjectId } from '../utils/validators';
 import logger from '../utils/logger';
-
-const isValidObjectId = (id: string): boolean => {
-  return mongoose.Types.ObjectId.isValid(id);
-};
-
-const sendToQueue = async (channel: Channel, message: any) => {
-  try {
-    await channel.sendToQueue(
-      getQueueName(),
-      Buffer.from(message),
-      { persistent: true } // Ensure message is not lost in case of failure
-    );
-    logger.info(`Message sent to RabbitMQ: ${message}`);
-  } catch (error) {
-    logger.error(`Error sending to RabbitMQ: ${error}`);
-    // Retry logic or send to a dead-letter queue
-  }
-};
-
-const clearCache = async () => {
-  try {
-    await redisClient.del('tasks:all');
-    logger.info('Task cache cleared');
-  } catch (err) {
-    logger.error(`Failed to clear task cache: ${err}`);
-  }
-};
 
 export const createTask = async (req: Request, res: Response) => {
   const { title, description, assigneeId } = req.body;
@@ -60,9 +35,8 @@ export const createTask = async (req: Request, res: Response) => {
 
     if (validAssigneeId) {
       const message = {
-        taskId: task.id,
-        assigneeId,
-        action: 'create',
+        userId: validAssigneeId,
+        message: `A new task "${task.title}" has been assigned to you.`,
       };
 
       try {
@@ -212,9 +186,8 @@ export const updateTask = async (req: AuthenticatedRequest, res: Response) => {
       }
 
       const message = {
-        taskId: task._id,
-        assigneeId: updates.assigneeId,
-        action: 'update',
+        userId: updates.assigneeId,
+        message: `You have been assigned to task "${task.title}".`,
       };
 
       try {

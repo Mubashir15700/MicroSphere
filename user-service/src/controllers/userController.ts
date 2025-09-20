@@ -1,29 +1,14 @@
 import { Request, Response } from 'express';
-import mongoose from 'mongoose';
 import bcrypt from 'bcrypt';
 import User from '../models/userModel';
 import { REDIS_CACHE_TTL } from '../config/envConfig';
 import redisClient from '../services/redisService';
 import { AuthenticatedRequest } from '../middlewares/authMiddleware';
 import handleError from '../utils/errorHandler';
+import clearCache from '../utils/cache';
+import { hasAccess } from '../utils/authorization';
+import { isValidObjectId } from '../utils/validators';
 import logger from '../utils/logger';
-
-const isValidObjectId = (id: string): boolean => {
-  return mongoose.Types.ObjectId.isValid(id);
-};
-
-const hasAccess = (reqUser: { id: string; role: string }, targetId: string) => {
-  return reqUser.role === 'admin' || reqUser.id === targetId;
-};
-
-const clearCache = async () => {
-  try {
-    await redisClient.del('users:all');
-    logger.info('User cache cleared');
-  } catch (err) {
-    logger.error('Failed to clear user cache:', err);
-  }
-};
 
 export const createUser = async (req: Request, res: Response) => {
   try {
@@ -168,6 +153,18 @@ export const updateUser = async (req: AuthenticatedRequest, res: Response) => {
     clearCache();
 
     res.status(200).json({ message: 'User updated successfully' });
+  } catch (error: any) {
+    handleError(res, error);
+  }
+};
+
+export const getAdminId = async (_req: Request, res: Response) => {
+  try {
+    const admin = await User.findOne({ role: 'admin' }).select('_id');
+    if (!admin) {
+      return res.status(404).json({ message: 'Admin user not found' });
+    }
+    res.status(200).json(admin._id);
   } catch (error: any) {
     handleError(res, error);
   }

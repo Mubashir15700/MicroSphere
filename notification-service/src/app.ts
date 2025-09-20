@@ -1,7 +1,8 @@
 import express, { NextFunction, Request, Response } from 'express';
+import bodyParser from 'body-parser';
 import swaggerUi from 'swagger-ui-express';
 import swaggerSpec from './docs/swagger';
-import bodyParser from 'body-parser';
+import './cron/deleteOldNotifications';
 import notificationRoutes from './routes/notificationRoutes';
 import errorHandler from './middlewares/errorMiddleware';
 import logger from './utils/logger';

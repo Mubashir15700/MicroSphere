@@ -251,6 +251,31 @@
 
 /**
  * @swagger
+ * /admin/id:
+ *   get:
+ *     summary: Retrieve admin user ID
+ *     tags: [User]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved the admin user ID
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: string
+ *                   description: The unique ID of the admin user.
+ *       404:
+ *         description: Admin not found
+ *       500:
+ *         description: Server error or internal processing failure
+ */
+
+/**
+ * @swagger
  * /:
  *   delete:
  *     summary: Delete a user or multiple users

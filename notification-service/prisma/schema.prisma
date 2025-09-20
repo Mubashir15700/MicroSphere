@@ -9,9 +9,12 @@ datasource db {
 
 model Notification {
   id        Int      @id @default(autoincrement())
-  userId    Int
+  userId    String
   message   String
   type      String
   isRead    Boolean  @default(false)
   createdAt DateTime @default(now())
+
+  // Indexing for better query performance
+  @@index([userId])
 }

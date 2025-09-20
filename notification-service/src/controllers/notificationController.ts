@@ -4,16 +4,8 @@ import { REDIS_CACHE_TTL } from '../config/envConfig';
 import redisClient from '../services/redisService';
 import { AuthenticatedRequest } from '../middlewares/authMiddleware';
 import handleError from '../utils/errorHandler';
+import clearCache from '../utils/cache';
 import logger from '../utils/logger';
-
-const clearCache = async () => {
-  try {
-    await redisClient.del('notifications:all');
-    logger.info('Notification cache cleared');
-  } catch (err) {
-    logger.error(`Failed to clear notification cache: ${err}`);
-  }
-};
 
 export const getAllNotifications = async (req: AuthenticatedRequest, res: Response) => {
   try {
@@ -35,7 +27,7 @@ export const getAllNotifications = async (req: AuthenticatedRequest, res: Respon
       logger.warn(`Redis get failed — continuing without cache: ${err}`);
     }
 
-    const notifications = await prisma.notification.findMany();
+    const notifications = await prisma.notification.findMany({ where: { userId: user.id } });
 
     try {
       await redisClient.setEx(cacheKey, REDIS_CACHE_TTL, JSON.stringify(notifications));
