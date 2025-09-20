@@ -16,3 +16,5 @@ coverage/
 # OS & Editor files
 .DS_Store
 *.swp
+
+/generated/prisma

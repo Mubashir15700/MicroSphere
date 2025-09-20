@@ -1,4 +1,5 @@
 import { Channel, ConsumeMessage } from 'amqplib';
+import prisma from '../prisma';
 import logger from '../utils/logger';
 
 const startConsuming = (channel: Channel, queueName: string) => {
@@ -6,7 +7,7 @@ const startConsuming = (channel: Channel, queueName: string) => {
     .assertQueue(queueName, { durable: true })
     .then(() => {
       logger.info(`Waiting for messages in queue: ${queueName}`);
-      channel.consume(queueName, (msg: ConsumeMessage | null) => {
+      channel.consume(queueName, async (msg: ConsumeMessage | null) => {
         if (!msg) return;
 
         const message = msg.content.toString();
@@ -16,9 +17,23 @@ const startConsuming = (channel: Channel, queueName: string) => {
         switch (queueName) {
           case 'taskQueue':
             // Handle taskQueue message
+            await prisma.notification.create({
+              data: {
+                userId: JSON.parse(message).userId || '',
+                message: JSON.parse(message).message || '',
+                type: 'task',
+              },
+            });
             break;
           case 'userQueue':
             // Handle userQueue message
+            await prisma.notification.create({
+              data: {
+                userId: JSON.parse(message).userId || '',
+                message: JSON.parse(message).message || '',
+                type: 'user',
+              },
+            });
             break;
           default:
             logger.info(`No handler defined for queue: ${queueName}`);

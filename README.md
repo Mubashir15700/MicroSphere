@@ -12,7 +12,7 @@ Services communicate through REST APIs and asynchronous messaging via RabbitMQ. 
 - **Auth Service** – Manages user registration and login, returns signed JWT tokens.
 - **User Service** – Manages user data in MongoDB, with Redis caching implemented in the "Get All Users" API.
 - **Task Service** – Manages tasks in MongoDB, and sends messages to RabbitMQ. Redis caching is used in the "Get All Tasks" API.
-- **Notification Service** – Subscribes to RabbitMQ and logs notifications or events.
+- **Notification Service** – Subscribes to RabbitMQ and sends notifications to users.
 - **Client (Next.js)** – React-based frontend using Zustand for global state management (under development).
 - **MongoDB** – Stores persistent data for users and tasks.
 - **Redis** – Caching layer for User and Task services to improve read performance.
@@ -114,3 +114,4 @@ Service Swagger URL:
 - **Auth Service** - http://localhost:3001/api-docs
 - **User Service** - http://localhost:3002/api-docs
 - **Task Service** - http://localhost:3003/api-docs
+- **Notification Service** - http://localhost:3004/api-docs

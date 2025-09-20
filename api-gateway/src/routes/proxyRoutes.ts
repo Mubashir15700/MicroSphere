@@ -1,7 +1,12 @@
 import { Router, Response } from 'express';
 import { createProxyMiddleware } from 'http-proxy-middleware';
 import verifyToken from '../middlewares/authMiddleware';
-import { AUTH_SERVICE_URL, USER_SERVICE_URL, TASK_SERVICE_URL } from '../config/envConfig';
+import {
+  AUTH_SERVICE_URL,
+  USER_SERVICE_URL,
+  TASK_SERVICE_URL,
+  NOTIFICATION_SERVICE_URL,
+} from '../config/envConfig';
 import logger from '../utils/logger';
 
 const router = Router();
@@ -31,6 +36,12 @@ const targetRoutes = [
     target: TASK_SERVICE_URL,
     authRequired: true,
     name: 'Task service',
+  },
+  {
+    path: '/notifications',
+    target: NOTIFICATION_SERVICE_URL,
+    authRequired: true,
+    name: 'Notification service',
   },
 ];
 
