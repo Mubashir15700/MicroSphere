@@ -1,34 +1,42 @@
-import { QUEUE_NAMES, RETRY_COUNT, RETRY_DELAY } from './config/rabbitmqConfig';
-import { createRabbitMQConnection, createRabbitMQChannel } from './services/rabbitmqService';
-import startConsuming from './consumers/notificationConsumer';
+import app from './app';
+import connectToRabbitMQ from './services/rabbitmqService';
+import redisClient from './services/redisService';
+import { PORT } from './config/envConfig';
 import logger from './utils/logger';
 
-const connectRabbitMQ = async (retries = RETRY_COUNT, delay = RETRY_DELAY): Promise<void> => {
-  while (retries > 0) {
-    try {
-      const connection = await createRabbitMQConnection();
-      const channel = await createRabbitMQChannel(connection);
+const handleGracefulShutdown = (server: any) => {
+  ['SIGINT', 'SIGTERM'].forEach(signal =>
+    process.on(signal, async () => {
+      logger.info(`${signal} received. Shutting down gracefully...`);
+      server.close(async () => {
+        await redisClient.close();
+        logger.info('MongoDB and Redis connection closed.');
+        logger.info('Server closed.');
+        process.exit(0);
+      });
+    })
+  );
 
-      logger.info('Notification Service connected to RabbitMQ');
+  process.on('unhandledRejection', reason => {
+    logger.error(`Unhandled Rejection: ${reason}`);
+  });
 
-      for (const queueName of QUEUE_NAMES) {
-        startConsuming(channel, queueName);
-      }
-
-      return; // success, exit retry loop
-    } catch (err: any) {
-      logger.error(`Failed to connect to RabbitMQ. Retries left: ${retries}`);
-      logger.error(`Reason: ${err.message}`);
-      retries -= 1;
-
-      if (retries === 0) {
-        logger.error('Giving up. Exiting.');
-        process.exit(1);
-      }
-
-      await new Promise(resolve => setTimeout(resolve, delay));
-    }
-  }
+  process.on('uncaughtException', err => {
+    logger.error(`Uncaught Exception: ${err}`);
+    process.exit(1);
+  });
 };
 
-connectRabbitMQ();
+const server = app.listen(PORT, async () => {
+  logger.info(`Notification Service listening on port ${PORT}`);
+
+  try {
+    await connectToRabbitMQ();
+    logger.info('Connected to RabbitMQ');
+  } catch (err) {
+    logger.error(`Failed to connect to RabbitMQ: ${err}`);
+    process.exit(1);
+  }
+});
+
+handleGracefulShutdown(server);

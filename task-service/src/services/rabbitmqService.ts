@@ -17,7 +17,14 @@ const connectToRabbitMQ = async () => {
     try {
       connection = await amqp.connect(RABBITMQ_URL);
       channel = await connection.createChannel();
-      await channel!.assertQueue(TASK_QUEUE_NAME, { durable: true });
+
+      if (channel) {
+        await channel.assertQueue(TASK_QUEUE_NAME, { durable: true });
+        logger.info(`Connected to RabbitMQ and asserted queue: ${TASK_QUEUE_NAME}`);
+      } else {
+        throw new Error('Failed to create RabbitMQ channel');
+      }
+
       break;
     } catch (err) {
       logger.error(`Could not connect to RabbitMQ: ${err}`);

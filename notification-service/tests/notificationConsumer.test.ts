@@ -2,6 +2,10 @@ import { Channel } from 'amqplib';
 import startConsuming from '../src/consumers/notificationConsumer';
 import logger from '../src/utils/logger';
 
+jest.mock('../src/services/notificationService', () => ({
+  createNotification: jest.fn().mockResolvedValue(true),
+}));
+
 // Mock logger
 jest.mock('../src/utils/logger', () => ({
   __esModule: true,
@@ -19,6 +23,7 @@ describe('Notification Consumer', () => {
       assertQueue: jest.fn().mockResolvedValue(undefined),
       consume: jest.fn(),
       ack: jest.fn(),
+      nack: jest.fn(),
     };
   });
 
@@ -37,12 +42,13 @@ describe('Notification Consumer', () => {
     // Simulate a message coming in
     const consumeCallback = (mockChannel.consume as jest.Mock).mock.calls[0][1];
     const mockMsg = {
-      content: Buffer.from('Test message'),
+      content: Buffer.from(JSON.stringify({ userId: '123', message: 'Test message' })),
     };
 
-    consumeCallback(mockMsg);
+    await consumeCallback(mockMsg);
 
-    expect(logger.info).toHaveBeenCalledWith('Received message: Test message');
+    expect(logger.info).toHaveBeenCalledWith(`Received message: ${mockMsg.content.toString()}`);
+
     expect(mockChannel.ack).toHaveBeenCalledWith(mockMsg);
   });
 

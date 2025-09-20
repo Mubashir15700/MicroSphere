@@ -5,6 +5,22 @@ const headers = {
   'x-service-secret': SHARED_SECRET,
 };
 
+const parseAxiosError = (error: any) => {
+  if (axios.isAxiosError(error)) {
+    return {
+      status: error.status || error.response?.status || 500,
+      message: error.response?.data?.message || error.message,
+      source: 'User Service',
+    };
+  }
+
+  return {
+    status: 500,
+    message: 'Unexpected internal error',
+    source: 'Auth Service',
+  };
+};
+
 export const createUser = async (userData: any) => {
   try {
     const response = await axios.post(`${USER_SERVICE_URL}`, userData, {
@@ -12,21 +28,7 @@ export const createUser = async (userData: any) => {
     });
     return response.data;
   } catch (error: any) {
-    if (axios.isAxiosError(error)) {
-      const status = error.status || 500;
-      const message = error.response?.data?.message || error.message;
-
-      throw {
-        status,
-        message,
-        source: 'User Service',
-      };
-    }
-    throw {
-      status: 500,
-      message: 'Unexpected error while creating user',
-      source: 'Auth Service',
-    };
+    throw parseAxiosError(error);
   }
 };
 
@@ -37,20 +39,17 @@ export const getUserByEmail = async (email: string) => {
     });
     return response.data;
   } catch (error: any) {
-    if (axios.isAxiosError(error)) {
-      const status = error.status || 500;
-      const message = error.response?.data?.message || error.message;
+    throw parseAxiosError(error);
+  }
+};
 
-      throw {
-        status,
-        message,
-        source: 'User Service',
-      };
-    }
-    throw {
-      status: 500,
-      message: 'Unexpected error while getting user by email',
-      source: 'Auth Service',
-    };
+export const getAdminId = async () => {
+  try {
+    const response = await axios.get(`${USER_SERVICE_URL}/admin/id`, {
+      headers,
+    });
+    return response.data;
+  } catch (error: any) {
+    throw parseAxiosError(error);
   }
 };

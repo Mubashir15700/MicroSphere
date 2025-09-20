@@ -1,26 +1,12 @@
 import { Request, Response } from 'express';
-import { Channel } from 'amqplib';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { JWT_SECRET } from '../config/envConfig';
-import { createUser, getUserByEmail } from '../services/userService';
-import { getChannel, getQueueName } from '../services/rabbitmqService';
+import { createUser, getUserByEmail, getAdminId } from '../services/userService';
+import { getChannel } from '../services/rabbitmqService';
+import sendAdminNotification from '../producers/queuePublisher';
 import handleError from '../utils/errorHandler';
 import logger from '../utils/logger';
-
-const sendAdminNotification = async (channel: Channel, message: any) => {
-  try {
-    await channel.sendToQueue(
-      getQueueName(),
-      Buffer.from(message),
-      { persistent: true } // Ensure message is not lost in case of failure
-    );
-    logger.info(`Message sent to RabbitMQ: ${message}`);
-  } catch (error) {
-    logger.error(`Error sending to RabbitMQ: ${error}`);
-    // Retry logic or send to a dead-letter queue
-  }
-};
 
 export const register = async (req: Request, res: Response) => {
   const { name, email, password } = req.body;
@@ -36,9 +22,16 @@ export const register = async (req: Request, res: Response) => {
       expiresIn: '7h',
     });
 
+    const adminId = await getAdminId();
+
+    if (!adminId) {
+      logger.warn('No admin user found to notify about new registration');
+      return res.status(201).json({ token });
+    }
+
     const message = {
-      userId: user.id,
-      action: 'create',
+      userId: adminId,
+      message: `New user registered: ${user.email}`,
     };
 
     try {

@@ -1,30 +1,27 @@
 import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { useCounterStore } from '@/store/useCounterStore';
-import Home from '../src/app/page';
+import LandingPage from '@/app/page'; // adjust path if needed
+import { MemoryRouterProvider } from 'next-router-mock/MemoryRouterProvider'; // for Link support
 
-// Reset store state before each test (important with Zustand)
-beforeEach(() => {
-  useCounterStore.setState({ count: 0 });
-});
+describe('LandingPage', () => {
+  beforeEach(() => {
+    render(<LandingPage />, { wrapper: MemoryRouterProvider });
+  });
 
-describe('Home Page Counter', () => {
-  it('renders initial count and updates on button clicks', async () => {
-    render(<Home />);
+  it('renders the heading', () => {
+    const heading = screen.getByRole('heading', { name: /task management made simple/i });
+    expect(heading).toBeInTheDocument();
+  });
 
-    // Check initial count
-    expect(screen.getByText(/counter:/i)).toHaveTextContent('Counter: 0');
+  it('renders subtext/description', () => {
+    const description = screen.getByText(/stay organized and in control/i);
+    expect(description).toBeInTheDocument();
+  });
 
-    // Get buttons
-    const decreaseBtn = screen.getByRole('button', { name: '-' });
-    const increaseBtn = screen.getByRole('button', { name: '+' });
+  it('renders Login and Register buttons with correct links', () => {
+    const loginLink = screen.getByRole('link', { name: /login/i });
+    const registerLink = screen.getByRole('link', { name: /register/i });
 
-    // Click increase and check count
-    await userEvent.click(increaseBtn);
-    expect(screen.getByText(/counter:/i)).toHaveTextContent('Counter: 1');
-
-    // Click decrease and check count
-    await userEvent.click(decreaseBtn);
-    expect(screen.getByText(/counter:/i)).toHaveTextContent('Counter: 0');
+    expect(loginLink).toHaveAttribute('href', '/login');
+    expect(registerLink).toHaveAttribute('href', '/register');
   });
 });

@@ -99,13 +99,6 @@
 
 /**
  * @swagger
- * tags:
- *   name: User
- *   description: API endpoints for managing users
- */
-
-/**
- * @swagger
  * /:
  *   get:
  *     summary: Retrieve all users
@@ -182,6 +175,39 @@
 
 /**
  * @swagger
+ * /profile:
+ *   get:
+ *     summary: Retrieve logged in user details
+ *     tags: [User]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved the user
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: string
+ *                   description: The unique ID of the user.
+ *                 name:
+ *                   type: string
+ *                   description: The name of the user.
+ *                 email:
+ *                   type: string
+ *                   description: The email of the user.
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: User not found
+ *       500:
+ *         description: Server error or internal processing failure
+ */
+
+/**
+ * @swagger
  * /userId/{id}:
  *   put:
  *     summary: Update a user by ID
@@ -219,6 +245,31 @@
  *         description: Access denied. Admins only or the user themselves can update their information.
  *       404:
  *         description: User not found
+ *       500:
+ *         description: Server error or internal processing failure
+ */
+
+/**
+ * @swagger
+ * /admin/id:
+ *   get:
+ *     summary: Retrieve admin user ID
+ *     tags: [User]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved the admin user ID
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: string
+ *                   description: The unique ID of the admin user.
+ *       404:
+ *         description: Admin not found
  *       500:
  *         description: Server error or internal processing failure
  */
