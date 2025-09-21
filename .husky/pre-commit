@@ -3,25 +3,33 @@
 echo "🔍 Running pre-commit checks..."
 
 # Get all staged files
-staged_files=$(git diff --cached --name-only)
+staged_files=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(js|ts|tsx|json|md|css|scss|html)$')
 
 # Define the services
 services=("api-gateway" "auth-service" "client" "notification-service" "task-service" "user-service")
 
 # Loop through services and check if any staged file is inside them
 for service in "${services[@]}"; do
-  if echo "$staged_files" | grep -q "^$service/"; then
+  service_files=$(echo "$staged_files" | grep "^$service/" || true)
+
+  if [ -n "$service_files" ]; then
     echo "🔧 Running checks in $service..."
     cd "$service"
 
+    # Filter service-specific staged files to relative paths
+    files_to_check=$(echo "$service_files" | sed "s|^$service/||")
+
     if [ -f "package.json" ]; then
-      echo "🎯 npm run format"
-      npm run format || exit 1
+      echo "🎯 Running Prettier on staged files..."
 
-      echo "🧹 npm run lint"
-      npm run lint || exit 1
+      # Run Prettier and re-add modified files
+      echo "$files_to_check" | xargs npx prettier --write
+      echo "$files_to_check" | xargs git add
 
-      echo "🧪 npm run test"
+      echo "🧹 Running ESLint on staged files..."
+      echo "$files_to_check" | xargs npx eslint --fix || exit 1
+
+      echo "🧪 Running tests..."
       npm run test || exit 1
     fi
 

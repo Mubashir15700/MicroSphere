@@ -1,4 +1,4 @@
-import prisma from '../prisma';
+import { prisma } from '../prisma';
 import clearCache from '../utils/cache';
 import logger from '../utils/logger';
 
