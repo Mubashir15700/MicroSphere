@@ -1,6 +1,6 @@
 # 🧩 MicroSphere – Node.js Microservices Architecture (TypeScript + Docker)
 
-This project demonstrates a complete Node.js microservices architecture using TypeScript, Docker, MongoDB, Redis, and RabbitMQ, along with a Next.js frontend. It follows clean service boundaries with Auth, User, Task, Notification, and an API Gateway.
+This project demonstrates a complete Node.js microservices architecture using TypeScript, Docker, MongoDB, MySQL, Prisma ORM, Redis, and RabbitMQ, along with a Next.js frontend. It follows clean service boundaries with Auth, User, Task, Notification, and an API Gateway.
 
 Services communicate through REST APIs and asynchronous messaging via RabbitMQ. The frontend, built with Next.js + TypeScript and Zustand for state management, is located in the /client folder and is currently under active development.
 
@@ -15,6 +15,7 @@ Services communicate through REST APIs and asynchronous messaging via RabbitMQ. 
 - **Notification Service** – Subscribes to RabbitMQ and sends notifications to users.
 - **Client (Next.js)** – React-based frontend using Zustand for global state management (under development).
 - **MongoDB** – Stores persistent data for users and tasks.
+- **Prisma ORM with MySQL** – For notifications persistence.
 - **Redis** – Caching layer for User and Task services to improve read performance.
 - **RabbitMQ** – Message broker for asynchronous, event-driven communication between services.
 - **Swagger** – API documentation available for backend services.
@@ -29,6 +30,7 @@ Services communicate through REST APIs and asynchronous messaging via RabbitMQ. 
 - **Node.js** with **Express**
 - **TypeScript**
 - **MongoDB**
+- **MySQL** (for Prisma ORM)
 - **Redis** (used in User and Task services)
 - **RabbitMQ**
 - **JWT Authentication**
@@ -60,7 +62,7 @@ Services communicate through REST APIs and asynchronous messaging via RabbitMQ. 
 ├── api-gateway/            # 🚪 Centralized routing & auth handling
 ├── auth-service/           # 🔐 Handles registration, login, and JWT
 ├── client/                 # 🖥️ Next.js frontend (Zustand, WIP)
-├── notification-service/   # 📣 RabbitMQ consumer for notifications
+├── notification-service/   # 📣 Notification management (Prisma + RabbitMQ)
 ├── task-service/           # ✅ Task management (MongoDB + Redis)
 ├── user-service/           # 👤 User data (MongoDB + Redis)
 ├── .gitignore              # 🚫 Git ignore rules

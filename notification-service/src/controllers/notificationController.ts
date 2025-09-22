@@ -1,5 +1,5 @@
 import { Response } from 'express';
-import prisma from '../prisma';
+import { prisma } from '../prisma';
 import { REDIS_CACHE_TTL } from '../config/envConfig';
 import redisClient from '../services/redisService';
 import { AuthenticatedRequest } from '../middlewares/authMiddleware';

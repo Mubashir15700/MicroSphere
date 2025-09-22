@@ -102,6 +102,7 @@ services:
     depends_on:
       - mysql
       - rabbitmq
+      - redis
     volumes:
       - ./notification-service:/app
       - /app/node_modules
