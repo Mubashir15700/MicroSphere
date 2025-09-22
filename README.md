@@ -1,4 +1,4 @@
-# 🧩 Node.js Microservices Architecture (TypeScript + Docker)
+# 🧩 MicroSphere – Node.js Microservices Architecture (TypeScript + Docker)
 
 This project demonstrates a complete Node.js microservices architecture using TypeScript, Docker, MongoDB, MySQL, Prisma ORM, Redis, and RabbitMQ, along with a Next.js frontend. It follows clean service boundaries with Auth, User, Task, Notification, and an API Gateway.
 
