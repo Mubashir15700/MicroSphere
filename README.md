@@ -12,7 +12,7 @@ Services communicate through REST APIs and asynchronous messaging via RabbitMQ. 
 - **Auth Service** – Manages user registration and login, returns signed JWT tokens.
 - **User Service** – Manages user data in MongoDB, with Redis caching implemented in the "Get All Users" API.
 - **Task Service** – Manages tasks in MongoDB, and sends messages to RabbitMQ. Redis caching is used in the "Get All Tasks" API.
-- **Notification Service** – Subscribes to RabbitMQ and sends notifications to users.
+- **Notification Service** – Subscribes to RabbitMQ and sends notifications to users. Redis caching is used in the "Get All Notifications" API.
 - **Client (Next.js)** – React-based frontend using Zustand for global state management (under development).
 - **MongoDB** – Stores persistent data for users and tasks.
 - **Prisma ORM with MySQL** – For notifications persistence.
@@ -88,7 +88,7 @@ Services communicate through REST APIs and asynchronous messaging via RabbitMQ. 
 1. **Clone the Repository**
 
 ```bash
-git clone https://github.com/your-username/nodejs-microservices.git
+git clone https://github.com/Mubashir15700/MicroSphere.git
 cd nodejs-microservices
 ```
 
