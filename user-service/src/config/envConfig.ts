@@ -8,7 +8,8 @@ export const MONGO_URI =
     : process.env.MONGO_URI || 'mongodb://mongo:27017/userDB';
 
 export const JWT_SECRET = process.env.JWT_SECRET || 'jwt_secret_key';
-export const SHARED_SECRET = process.env.SHARED_SECRET || 'shared_secret_key';
+export const SERVICE_SECRET = process.env.SERVICE_SECRET || 'user-secret';
+export const INTERNAL_AUTH = process.env.INTERNAL_AUTH || 'internal-auth';
 
 export const ADMIN_CREDENTIALS = {
   email: process.env.ADMIN_EMAIL || 'admin@example.com',
@@ -22,4 +23,4 @@ export const REDIS_URL =
     : process.env.REDIS_URL || 'redis://redis:6379';
 export const REDIS_CACHE_TTL = parseInt(process.env.REDIS_CACHE_TTL || '3600');
 
-export const SWAGGER_SERVER_URL = process.env.SWAGGER_SERVER_URL || `http://localhost:${PORT}`;
+export const SWAGGER_SERVER_URL = process.env.SWAGGER_SERVER_URL || 'http://localhost:3000/users';

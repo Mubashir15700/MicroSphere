@@ -2,6 +2,7 @@ import express, { NextFunction, Request, Response } from 'express';
 import swaggerUi from 'swagger-ui-express';
 import swaggerSpec from './docs/swagger';
 import userRoutes from './routes/userRoutes';
+import { verifyServiceSecret } from './middlewares/verifyServiceSecret';
 import errorHandler from './middlewares/errorMiddleware';
 import logger from './utils/logger';
 
@@ -15,6 +16,8 @@ app.use((req: Request, _res: Response, next: NextFunction) => {
 });
 
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
+app.use(verifyServiceSecret);
 
 app.use(userRoutes);
 
