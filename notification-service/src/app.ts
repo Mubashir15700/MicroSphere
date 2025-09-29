@@ -4,6 +4,7 @@ import swaggerUi from 'swagger-ui-express';
 import swaggerSpec from './docs/swagger';
 import './cron/deleteOldNotifications';
 import notificationRoutes from './routes/notificationRoutes';
+import { verifyServiceSecret } from './middlewares/verifyServiceSecret';
 import errorHandler from './middlewares/errorMiddleware';
 import logger from './utils/logger';
 
@@ -18,6 +19,8 @@ app.use((req: Request, _res: Response, next: NextFunction) => {
 });
 
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
+app.use(verifyServiceSecret);
 
 app.use(notificationRoutes);
 
