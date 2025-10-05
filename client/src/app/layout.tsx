@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Node.js Microservices',
-  description: 'Node.js Microservices',
+  title: 'MicroSphere',
+  description: 'Node.js Microservices Architecture',
 };
 
 export default function RootLayout({
