@@ -3,20 +3,95 @@
 import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useAuthStore } from '@/store/authStore';
+import { LoginFormSchema, LoginFormState } from '@/app/lib/definitions';
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
+  const router = useRouter();
+  const loginUser = useAuthStore((s) => s.login);
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const [state, setState] = useState<LoginFormState>();
+  const [pending, setPending] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setLoading(true);
+    e.stopPropagation();
 
-    // TODO: handle login logic here
+    const validatedFields = LoginFormSchema.safeParse({
+      email: e.currentTarget.email.value,
+      password: e.currentTarget.password.value,
+    });
 
-    setLoading(false);
+    if (!validatedFields.success) {
+      setState({
+        errors: validatedFields.error.flatten().fieldErrors,
+      });
+      return;
+    }
+
+    setState({ errors: undefined });
+
+    setPending(true);
+
+    try {
+      const response = await fetch('/api/auth?action=login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(validatedFields.data),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setState({
+          errors: {
+            email: [data.message || 'Invalid login credentials'],
+          },
+        });
+        return;
+      }
+
+      console.log('Login success, token received:', data);
+
+      const profileResponse = await fetch('/api/auth?action=profile', {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${data.token}`,
+        },
+      });
+
+      const profileData = await profileResponse.json();
+
+      if (!profileResponse.ok) {
+        setState({
+          errors: {
+            email: [profileData.message || 'Failed to fetch profile data.'],
+          },
+        });
+        return;
+      }
+
+      console.log('Profile fetched:', profileData);
+
+      loginUser(profileData.profile, data.token);
+
+      const role = profileData.profile.role;
+      const route = role === 'admin' ? '/admin/dashboard' : '/dashboard';
+      router.replace(route);
+    } catch (error) {
+      console.error('Login failed', error);
+      setState({
+        errors: {
+          email: ['An unexpected error occurred. Please try again later.'],
+        },
+      });
+    } finally {
+      setPending(false);
+    }
   };
 
   return (
@@ -26,7 +101,7 @@ export default function LoginPage() {
           Login to your account
         </h2>
 
-        <form onSubmit={handleLogin} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label
               htmlFor="email"
@@ -34,14 +109,8 @@ export default function LoginPage() {
             >
               Email
             </label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
+            <Input id="email" name="email" type="email" placeholder="you@example.com" required />
+            {state?.errors?.email && <p className="text-red-600">{state.errors.email}</p>}
           </div>
 
           <div>
@@ -51,18 +120,12 @@ export default function LoginPage() {
             >
               Password
             </label>
-            <Input
-              id="password"
-              type="password"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
+            <Input id="password" name="password" type="password" placeholder="••••••••" required />
+            {state?.errors?.password && <p className="text-red-600">{state.errors.password}</p>}
           </div>
 
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? 'Logging in...' : 'Login'}
+          <Button type="submit" className="w-full" disabled={pending}>
+            {pending ? 'Logging in...' : 'Login'}
           </Button>
         </form>
 

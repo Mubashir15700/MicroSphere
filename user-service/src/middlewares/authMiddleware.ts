@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt, { JwtPayload } from 'jsonwebtoken';
-import { JWT_SECRET, SHARED_SECRET } from '../config/envConfig';
+import { JWT_SECRET, INTERNAL_AUTH } from '../config/envConfig';
 
 export interface AuthenticatedRequest extends Request {
   user?: {
@@ -43,13 +43,14 @@ export const requireAdmin = (req: AuthenticatedRequest, res: Response, next: Nex
   next();
 };
 
-export const validateServiceSecretOrAdmin = (
+export const verifyUserOrService = (
   req: AuthenticatedRequest,
   res: Response,
   next: NextFunction
 ) => {
-  const secret = req.headers['x-service-secret'];
-  if (secret === SHARED_SECRET) {
+  const secret = req.headers['x-internal-auth'];
+
+  if (secret === INTERNAL_AUTH) {
     return next();
   }
 

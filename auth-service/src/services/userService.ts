@@ -1,8 +1,9 @@
 import axios from 'axios';
-import { SHARED_SECRET, USER_SERVICE_URL } from '../config/envConfig';
+import { INTERNAL_AUTH, USER_SERVICE_SECRET, USER_SERVICE_URL } from '../config/envConfig';
 
 const headers = {
-  'x-service-secret': SHARED_SECRET,
+  'x-service-secret': USER_SERVICE_SECRET,
+  'x-internal-auth': INTERNAL_AUTH,
 };
 
 const parseAxiosError = (error: any) => {
