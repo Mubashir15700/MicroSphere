@@ -55,13 +55,8 @@ export default function LoginPage() {
         return;
       }
 
-      console.log('Login success, token received:', data);
-
       const profileResponse = await fetch('/api/auth?action=profile', {
         method: 'GET',
-        headers: {
-          Authorization: `Bearer ${data.token}`,
-        },
       });
 
       const profileData = await profileResponse.json();
@@ -75,11 +70,14 @@ export default function LoginPage() {
         return;
       }
 
-      console.log('Profile fetched:', profileData);
+      loginUser({
+        id: profileData._id,
+        name: profileData.name,
+        email: profileData.email,
+        role: profileData.role,
+      });
 
-      loginUser(profileData.profile, data.token);
-
-      const role = profileData.profile.role;
+      const role = profileData.role;
       const route = role === 'admin' ? '/admin/dashboard' : '/dashboard';
       router.replace(route);
     } catch (error) {

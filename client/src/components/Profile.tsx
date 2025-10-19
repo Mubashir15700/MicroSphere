@@ -4,8 +4,10 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 
 interface UserProfile {
+  id: string;
   name: string;
   email: string;
+  role: 'admin' | 'user';
 }
 
 interface ProfileFormProps {
@@ -30,9 +32,6 @@ export default function ProfileForm({
   return (
     <div className="mx-auto mt-10 max-w-md rounded-md bg-white p-6 shadow-md dark:bg-gray-800">
       <h1 className="mb-6 text-2xl font-semibold text-gray-900 dark:text-white">Profile</h1>
-
-      {error && <p className="mb-4 text-red-600 dark:text-red-400">{error}</p>}
-
       <div className="space-y-4">
         <div>
           <label htmlFor="name" className="mb-1 block font-medium text-gray-700 dark:text-gray-300">
@@ -64,6 +63,8 @@ export default function ProfileForm({
           />
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Email cannot be changed.</p>
         </div>
+
+        {error && <p className="mb-4 text-red-600 dark:text-red-400">{error}</p>}
 
         <Button onClick={onSave} disabled={saving} className="w-full">
           {saving ? 'Saving...' : 'Save Changes'}

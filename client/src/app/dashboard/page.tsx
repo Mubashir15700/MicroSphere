@@ -23,7 +23,7 @@ export default function UserDashboard() {
   const [error, setError] = useState<string | null>(null);
 
   const handleLogout = async () => {
-    await fetch('/api/logout', {
+    await fetch('/api/auth?action=logout', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
