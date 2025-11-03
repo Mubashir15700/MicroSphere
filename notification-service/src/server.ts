@@ -1,7 +1,9 @@
+import http from 'http';
 import app from './app';
 import { connectPrisma, disconnectPrisma } from './prisma';
 import connectToRabbitMQ from './services/rabbitmqService';
 import redisClient from './services/redisService';
+import { initSocket } from './socket';
 import { PORT } from './config/envConfig';
 import logger from './utils/logger';
 
@@ -43,7 +45,10 @@ const handleGracefulShutdown = (server: any) => {
       process.exit(1);
     }
 
-    const server = app.listen(PORT, async () => {
+    const server = http.createServer(app);
+    initSocket(server);
+
+    server.listen(PORT, async () => {
       logger.info(`Notification Service listening on port ${PORT}`);
 
       try {
