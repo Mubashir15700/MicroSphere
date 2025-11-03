@@ -7,6 +7,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuthStore } from '@/store/authStore';
+import { fetchWithAuth } from '@/lib/fetchClient';
 
 interface AdminShellProps {
   children: ReactNode;
@@ -24,7 +25,7 @@ export default function AdminShell({ children }: AdminShellProps) {
   useEffect(() => {
     async function fetchProfile() {
       try {
-        const res = await fetch('/api/auth?action=profile', {
+        const res = await fetchWithAuth('/api/auth?action=profile', {
           credentials: 'include',
         });
         if (!res.ok) {
@@ -62,7 +63,7 @@ export default function AdminShell({ children }: AdminShellProps) {
   }, [user, loginUser, router]);
 
   const handleLogout = async () => {
-    await fetch('/api/auth?action=logout', {
+    await fetchWithAuth('/api/auth?action=logout', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

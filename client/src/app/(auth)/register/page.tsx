@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuthStore } from '@/store/authStore';
 import { RegisterFormSchema, RegisterFormState } from '@/app/lib/definitions';
+import { fetchWithAuth } from '@/lib/fetchClient';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -37,7 +38,7 @@ export default function RegisterPage() {
     setPending(true);
 
     try {
-      const response = await fetch('/api/auth?action=register', {
+      const response = await fetchWithAuth('/api/auth?action=register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -56,7 +57,7 @@ export default function RegisterPage() {
         return;
       }
 
-      const profileResponse = await fetch('/api/auth?action=profile', {
+      const profileResponse = await fetchWithAuth('/api/auth?action=profile', {
         method: 'GET',
       });
 

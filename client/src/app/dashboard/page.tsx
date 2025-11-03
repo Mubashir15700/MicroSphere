@@ -6,6 +6,7 @@ import { User, LogOut } from 'lucide-react'; // Import the icon
 import { useAuthStore } from '@/store/authStore';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
+import { fetchWithAuth } from '@/lib/fetchClient';
 
 interface Task {
   id: string;
@@ -23,7 +24,7 @@ export default function UserDashboard() {
   const [error, setError] = useState<string | null>(null);
 
   const handleLogout = async () => {
-    await fetch('/api/auth?action=logout', {
+    await fetchWithAuth('/api/auth?action=logout', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

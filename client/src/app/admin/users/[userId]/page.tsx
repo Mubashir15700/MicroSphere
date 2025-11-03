@@ -2,24 +2,40 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
+import { useUsersStore } from '@/store/usersStore';
 import UserForm, { UserFormData } from '@/components/admin/UserForm';
+import { fetchWithAuth } from '@/lib/fetchClient';
 
 export default function AdminUserDetailPage() {
-  const { userId } = useParams();
+  const params = useParams();
+
+  const { users } = useUsersStore();
+
   const [user, setUser] = useState<UserFormData | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // TODO: Replace this with an API call to fetch user by ID
-    setTimeout(() => {
+    if (!params?.userId) return;
+    const user = users.find((u) => u.id === params?.userId);
+
+    if (user) {
       setUser({
-        name: 'Bob Admin',
-        email: 'bob@example.com',
-        role: 'admin',
+        name: user.name,
+        email: user.email,
+        role: user.role,
       });
       setLoading(false);
-    }, 500);
-  }, [userId]);
+      return;
+    } else {
+      fetchWithAuth(`/api/user?action=getById&id=${params.userId}`)
+        .then((res) => res.json())
+        .then((data) => {
+          setUser(data);
+          setLoading(false);
+        })
+        .catch(() => setLoading(false));
+    }
+  }, [params?.userId, users]);
 
   if (loading) {
     return <p className="mt-10 text-center">Loading user details...</p>;

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import ProfileForm from '@/components/Profile';
 import { useAuthStore } from '@/store/authStore';
 import { ProfileSchema } from '@/app/lib/definitions';
+import { fetchWithAuth } from '@/lib/fetchClient';
 
 interface UserProfile {
   id: string;
@@ -50,7 +51,7 @@ export default function UserProfilePage() {
     try {
       setSaving(true);
 
-      const response = await fetch('/api/auth?action=profile&id=' + user!.id, {
+      const response = await fetchWithAuth('/api/auth?action=profile&id=' + user!.id, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

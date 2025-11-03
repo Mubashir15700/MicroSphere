@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuthStore } from '@/store/authStore';
 import { LoginFormSchema, LoginFormState } from '@/app/lib/definitions';
+import { fetchWithAuth } from '@/lib/fetchClient';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -36,7 +37,7 @@ export default function LoginPage() {
     setPending(true);
 
     try {
-      const response = await fetch('/api/auth?action=login', {
+      const response = await fetchWithAuth('/api/auth?action=login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -55,7 +56,7 @@ export default function LoginPage() {
         return;
       }
 
-      const profileResponse = await fetch('/api/auth?action=profile', {
+      const profileResponse = await fetchWithAuth('/api/auth?action=profile', {
         method: 'GET',
       });
 
