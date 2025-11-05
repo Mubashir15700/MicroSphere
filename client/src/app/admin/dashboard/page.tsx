@@ -32,12 +32,15 @@ export default function AdminDashboard() {
       const tasksData = await tasksRes.json();
 
       usersStore.setUsers(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        usersData.map((user: any) => ({
-          id: user._id,
-          name: user.name,
-          email: user.email,
-        }))
+        usersData
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          .filter((user: any) => user.role !== 'admin')
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          .map((user: any) => ({
+            id: user._id,
+            name: user.name,
+            email: user.email,
+          }))
       );
       tasksStore.setTasks(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any

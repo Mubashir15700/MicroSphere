@@ -1,7 +1,9 @@
 'use client';
 
-import Tasks, { Task } from '@/components/Tasks';
 import { useState } from 'react';
+import Link from 'next/link';
+import Tasks, { Task } from '@/components/Tasks';
+import { Button } from '@/components/ui/button';
 
 export default function UserTasksPage() {
   const [tasks, setTasks] = useState<Task[]>([
@@ -22,7 +24,12 @@ export default function UserTasksPage() {
 
   return (
     <div className="p-6">
-      <h1 className="mb-6 text-3xl font-bold">Tasks</h1>
+      <div className="flex justify-between">
+        <h1 className="mb-6 text-3xl font-bold">Tasks</h1>
+        <Link href="/admin/tasks/create">
+          <Button>Create Task</Button>
+        </Link>
+      </div>
       <Tasks tasks={tasks} isAdmin={true} onDelete={() => {}} />
     </div>
   );

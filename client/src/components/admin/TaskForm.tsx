@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { TaskSchema } from '@/app/lib/definitions';
 
 export interface TaskFormData {
   title: string;
@@ -18,9 +19,15 @@ interface TaskFormProps {
   initialData?: TaskFormData;
   onSubmit: (data: TaskFormData) => void;
   isSubmitting?: boolean;
+  actionError?: string | null;
 }
 
-export default function TaskForm({ initialData, onSubmit, isSubmitting }: TaskFormProps) {
+export default function TaskForm({
+  initialData,
+  onSubmit,
+  isSubmitting,
+  actionError,
+}: TaskFormProps) {
   const [formData, setFormData] = useState<TaskFormData>(
     initialData || {
       title: '',
@@ -30,6 +37,7 @@ export default function TaskForm({ initialData, onSubmit, isSubmitting }: TaskFo
       assigneeId: '',
     }
   );
+  const [error, setError] = useState<string | null>(null);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -40,7 +48,23 @@ export default function TaskForm({ initialData, onSubmit, isSubmitting }: TaskFo
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(formData);
+
+    const validatedFields = TaskSchema.safeParse({
+      title: formData.title,
+      description: formData.description,
+      status: formData.status,
+      dueDate: formData.dueDate,
+      assigneeId: formData.assigneeId,
+    });
+
+    if (!validatedFields.success) {
+      setError(validatedFields.error.issues.map((issue) => issue.message).join(', '));
+      return;
+    }
+
+    setError(null);
+
+    if (onSubmit) onSubmit(formData);
   };
 
   return (
@@ -71,7 +95,7 @@ export default function TaskForm({ initialData, onSubmit, isSubmitting }: TaskFo
           className="w-full rounded-md border p-2 dark:border-gray-700 dark:bg-gray-800"
         >
           <option value="pending">Pending</option>
-          <option value="in-progress">In Progress</option>
+          <option value="in progress">In Progress</option>
           <option value="completed">Completed</option>
         </select>
       </div>
@@ -97,6 +121,8 @@ export default function TaskForm({ initialData, onSubmit, isSubmitting }: TaskFo
           onChange={handleChange}
         />
       </div>
+
+      {(error || actionError) && <p className="text-red-600">{error || actionError}</p>}
 
       <Button type="submit" disabled={isSubmitting}>
         {isSubmitting ? 'Submitting...' : 'Submit'}

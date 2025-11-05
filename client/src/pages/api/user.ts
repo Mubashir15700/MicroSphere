@@ -32,6 +32,22 @@ async function handleGetUser(req: NextApiRequest, res: NextApiResponse, token?: 
   }
 }
 
+async function handleCreateUser(req: NextApiRequest, res: NextApiResponse, token?: string) {
+  {
+    if (req.method === 'POST') {
+      try {
+        const axiosInstance = createAxiosInstance(token);
+        const response = await axiosInstance.post(`/users`, req.body);
+        return res.status(response.status).json(response.data);
+      } catch (error: unknown) {
+        return handleAxiosError(error, res);
+      }
+    } else {
+      res.status(405).json({ message: 'Method Not Allowed' });
+    }
+  }
+}
+
 // Main handler for all API requests to this file
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const token = req.cookies.token;
@@ -41,6 +57,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return handleGetAllUsers(req, res, token);
       } else if (req.query.action === 'getById') {
         return handleGetUser(req, res, token);
+      } else {
+        return res.status(400).json({ message: 'Invalid action' });
+      }
+    case 'POST':
+      if (req.query.action === 'create') {
+        return handleCreateUser(req, res, token);
       } else {
         return res.status(400).json({ message: 'Invalid action' });
       }
