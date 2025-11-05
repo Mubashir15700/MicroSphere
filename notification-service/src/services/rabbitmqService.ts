@@ -30,7 +30,8 @@ const connectToRabbitMQ = async (): Promise<void> => {
 
       if (retries === 0) {
         logger.error('Giving up. Exiting.');
-        process.exit(1);
+        // process.exit(1);
+        return;
       }
 
       await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));

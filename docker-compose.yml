@@ -98,7 +98,7 @@ services:
     build: ./notification-service
     container_name: notification-service
     ports:
-      - "3004"
+      - "3004:3004"
     depends_on:
       - mysql
       - rabbitmq
