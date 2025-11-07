@@ -57,6 +57,7 @@ export default function EditTaskPage({ params }: PageProps) {
         description: data.description,
         dueDate: data.dueDate,
         status: data.status,
+        ...(data.assigneeId && { assigneeId: data.assigneeId }),
       };
 
       const response = await fetchWithAuth(`/api/task?action=update&id=${taskId}`, {

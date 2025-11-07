@@ -69,7 +69,7 @@ export const TaskSchema = z.object({
 
   description: z.string().optional().or(z.literal('')),
 
-  status: z.enum(['pending', 'in progress', 'completed'], {
+  status: z.enum(['pending', 'in-progress', 'completed'], {
     message: 'Status must be pending, in progress, or completed.',
   }),
 

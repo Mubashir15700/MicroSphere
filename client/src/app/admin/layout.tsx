@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { NotificationMenu } from '@/components/NotificaitonMenu';
 import { useAuthStore } from '@/store/authStore';
 import { fetchWithAuth } from '@/lib/fetchClient';
 
@@ -117,15 +118,18 @@ export default function AdminShell({ children }: AdminShellProps) {
         {/* Header */}
         <header className="flex h-16 items-center justify-between border-b border-gray-200 bg-white px-6 dark:border-gray-700 dark:bg-gray-800">
           <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Admin</h1>
-          <Button
-            size="icon"
-            variant="outline"
-            className="ml-5 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-600"
-            onClick={handleLogout}
-            type="button"
-          >
-            <LogOut className="h-8 w-8" />
-          </Button>
+          <div>
+            <NotificationMenu />
+            <Button
+              size="icon"
+              variant="outline"
+              className="ml-5 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-600"
+              onClick={handleLogout}
+              type="button"
+            >
+              <LogOut className="h-8 w-8" />
+            </Button>
+          </div>
         </header>
 
         {/* Content area */}
