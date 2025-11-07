@@ -14,11 +14,12 @@ export interface Task {
 
 interface TasksProps {
   tasks: Task[];
-  isAdmin?: boolean; // Optional: show extra admin actions if true
-  onDelete?: (taskId: string) => void; // Admin delete handler
+  isAdmin?: boolean;
+  onDelete?: (taskId: string, userName: string) => void;
+  deleting: string | null;
 }
 
-export default function Tasks({ tasks, isAdmin = false, onDelete }: TasksProps) {
+export default function Tasks({ tasks, isAdmin = false, onDelete, deleting }: TasksProps) {
   if (tasks.length === 0) {
     return <p className="text-center text-gray-700 dark:text-gray-300">No tasks found.</p>;
   }
@@ -62,9 +63,9 @@ export default function Tasks({ tasks, isAdmin = false, onDelete }: TasksProps) 
                 <Button
                   size="sm"
                   variant="destructive"
-                  onClick={() => onDelete && onDelete(task.id)}
+                  onClick={() => onDelete && onDelete(task.id, task.title)}
                 >
-                  Delete
+                  {deleting === task.id ? 'Deleting...' : 'Delete'}
                 </Button>
               </>
             )}

@@ -27,7 +27,7 @@ export default function CreateTaskPage() {
       const result = await response.json();
 
       if (!response.ok) {
-        setError(result?.data?.message || result?.message || 'Failed to create user');
+        setError(result?.data?.message || result?.message || 'Failed to create task');
         return;
       }
 

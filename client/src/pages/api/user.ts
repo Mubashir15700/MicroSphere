@@ -48,6 +48,38 @@ async function handleCreateUser(req: NextApiRequest, res: NextApiResponse, token
   }
 }
 
+async function handleDeleteUser(req: NextApiRequest, res: NextApiResponse, token?: string) {
+  {
+    if (req.method === 'DELETE') {
+      try {
+        const axiosInstance = createAxiosInstance(token);
+        const response = await axiosInstance.delete(`/users?id=${req.query.id}`);
+        return res.status(response.status).json(response.data);
+      } catch (error: unknown) {
+        return handleAxiosError(error, res);
+      }
+    } else {
+      res.status(405).json({ message: 'Method Not Allowed' });
+    }
+  }
+}
+
+async function handleUpdateUser(req: NextApiRequest, res: NextApiResponse, token?: string) {
+  {
+    if (req.method === 'PUT') {
+      try {
+        const axiosInstance = createAxiosInstance(token);
+        const response = await axiosInstance.put(`/users/userId/${req.query.id}`);
+        return res.status(response.status).json(response.data);
+      } catch (error: unknown) {
+        return handleAxiosError(error, res);
+      }
+    } else {
+      res.status(405).json({ message: 'Method Not Allowed' });
+    }
+  }
+}
+
 // Main handler for all API requests to this file
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const token = req.cookies.token;
@@ -63,6 +95,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     case 'POST':
       if (req.query.action === 'create') {
         return handleCreateUser(req, res, token);
+      } else {
+        return res.status(400).json({ message: 'Invalid action' });
+      }
+    case 'DELETE':
+      if (req.query.action === 'delete') {
+        return handleDeleteUser(req, res, token);
+      } else {
+        return res.status(400).json({ message: 'Invalid action' });
+      }
+    case 'PUT':
+      if (req.query.action === 'update') {
+        return handleUpdateUser(req, res, token);
       } else {
         return res.status(400).json({ message: 'Invalid action' });
       }

@@ -3,6 +3,8 @@
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import TaskForm, { TaskFormData } from '@/components/admin/TaskForm';
+import { fetchWithAuth } from '@/lib/fetchClient';
+import { useTasksStore } from '@/store/tasksStore';
 
 interface PageProps {
   params: { taskId: string };
@@ -11,30 +13,80 @@ interface PageProps {
 export default function EditTaskPage({ params }: PageProps) {
   const { taskId } = params;
   const router = useRouter();
+
+  const { tasks, updateTask } = useTasksStore();
+
   const [task, setTask] = useState<TaskFormData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    // TODO: Fetch task details by taskId
-    setTimeout(() => {
+    // if (taskId) return;
+    const task = tasks.find((t) => t.id === taskId);
+
+    if (task) {
       setTask({
-        title: 'Sample Task',
-        description: 'This is an editable task.',
-        status: 'pending',
-        dueDate: '2025-09-30',
-        assigneeId: 'user123',
+        title: task.title,
+        description: task.description,
+        dueDate: task.dueDate,
+        status: task.status,
+        id: task._id,
+        assigneeId: task.assigneeId,
       });
       setLoading(false);
-    }, 500);
-  }, [taskId]);
+      return;
+    } else {
+      fetchWithAuth(`/api/task?action=getById&id=${taskId}`)
+        .then((res) => res.json())
+        .then((data) => {
+          setTask(data);
+          setLoading(false);
+        })
+        .catch(() => setLoading(false));
+    }
+  }, [taskId, tasks]);
 
   const handleUpdate = async (data: TaskFormData) => {
-    // TODO: Send PUT/PATCH request to update task
-    console.log('Updating task:', data);
+    try {
+      setIsSubmitting(true);
+      setError(null);
 
-    setTimeout(() => {
-      router.push(`/admin/tasks/${taskId}`);
-    }, 500);
+      const payload = {
+        title: data.title,
+        description: data.description,
+        dueDate: data.dueDate,
+        status: data.status,
+      };
+
+      const response = await fetchWithAuth(`/api/task?action=update&id=${taskId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        setError(result?.data?.message || result?.message || 'Failed to update task');
+        return;
+      }
+
+      if (result.task) {
+        updateTask(result.task);
+      }
+
+      setTimeout(() => {
+        router.push('/admin/tasks');
+      }, 500);
+    } catch (err) {
+      console.error('Error updating task:', err);
+      setError('Something went wrong. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (loading) return <p className="mt-10 text-center">Loading task...</p>;
@@ -43,7 +95,12 @@ export default function EditTaskPage({ params }: PageProps) {
   return (
     <div className="mx-auto mt-10 max-w-2xl rounded-md bg-white p-6 shadow-md dark:bg-gray-800">
       <h1 className="mb-4 text-2xl font-bold text-gray-900 dark:text-white">Edit Task</h1>
-      <TaskForm initialData={task} onSubmit={handleUpdate} />
+      <TaskForm
+        initialData={task}
+        onSubmit={handleUpdate}
+        isSubmitting={isSubmitting}
+        actionError={error}
+      />
     </div>
   );
 }

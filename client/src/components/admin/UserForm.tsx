@@ -49,8 +49,8 @@ export default function UserForm({
     const validatedFields = UserSchema.safeParse({
       name: formData.name,
       email: formData.email,
-      password: formData.password,
       role: formData.role,
+      ...(initialData ? {} : { password: formData.password }),
     });
 
     if (!validatedFields.success) {
@@ -90,7 +90,7 @@ export default function UserForm({
         />
       </div>
 
-      {!isViewOnly && (
+      {!isViewOnly && !initialData && (
         <div>
           <Label htmlFor="password">Password</Label>
           <Input

@@ -55,7 +55,8 @@ export const UserSchema = z.object({
   password: z
     .string()
     .min(6, { message: 'Password must be at least 6 characters long.' })
-    .nonempty({ message: 'Password is required.' }),
+    .nonempty({ message: 'Password is required.' })
+    .optional(),
 
   role: z.enum(['user', 'admin'], { message: 'Role must be either "user" or "admin".' }),
 });

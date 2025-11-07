@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { TaskSchema } from '@/app/lib/definitions';
 
 export interface TaskFormData {
+  id?: string;
   title: string;
   description: string;
   status: 'pending' | 'in-progress' | 'completed';
@@ -67,6 +68,8 @@ export default function TaskForm({
     if (onSubmit) onSubmit(formData);
   };
 
+  const dueDate = formData.dueDate ? new Date(formData.dueDate).toISOString().split('T')[0] : '';
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
@@ -106,7 +109,7 @@ export default function TaskForm({
           id="dueDate"
           name="dueDate"
           type="date"
-          value={formData.dueDate}
+          value={dueDate}
           onChange={handleChange}
           required
         />
