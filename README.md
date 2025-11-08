@@ -1,8 +1,10 @@
 # 🧩 MicroSphere – Node.js Microservices Architecture (TypeScript + Docker)
 
-This project demonstrates a complete Node.js microservices architecture using TypeScript, Docker, MongoDB, MySQL, Prisma ORM, Redis, and RabbitMQ, along with a Next.js frontend. It follows clean service boundaries with Auth, User, Task, Notification, and an API Gateway.
+This project demonstrates a complete Node.js microservices architecture using TypeScript, Docker, MongoDB, MySQL, Prisma ORM, Redis, RabbitMQ, and Socket.IO, along with a Next.js frontend. It follows clean service boundaries with Auth, User, Task, Notification, and an API Gateway. 
 
-Services communicate through REST APIs and asynchronous messaging via RabbitMQ. The frontend, built with Next.js + TypeScript and Zustand for state management, is located in the /client folder and is currently under active development.
+Services communicate through REST APIs, asynchronous messaging (RabbitMQ), and real-time WebSocket events (Socket.IO).
+
+The frontend, built with Next.js + TypeScript and Zustand for state management, is located in the /client folder and is currently under active development.
 
 ---
 
@@ -12,8 +14,8 @@ Services communicate through REST APIs and asynchronous messaging via RabbitMQ. 
 - **Auth Service** – Manages user registration and login, returns signed JWT tokens.
 - **User Service** – Manages user data in MongoDB, with Redis caching implemented in the "Get All Users" API.
 - **Task Service** – Manages tasks in MongoDB, and sends messages to RabbitMQ. Redis caching is used in the "Get All Tasks" API.
-- **Notification Service** – Subscribes to RabbitMQ and sends notifications to users. Redis caching is used in the "Get All Notifications" API.
-- **Client (Next.js)** – React-based frontend using Zustand for global state management (under development).
+- **Notification Service** – Subscribes to RabbitMQ, stores notifications via Prisma (MySQL), and sends real-time notifications to the client using Socket.IO. Redis caching is used in the “Get All Notifications” API.
+- **Client (Next.js)** – React-based frontend using Zustand for global state management and Socket.IO client for real-time notifications.
 - **MongoDB** – Stores persistent data for users and tasks.
 - **Prisma ORM with MySQL** – For notifications persistence.
 - **Redis** – Caching layer for User, Task and Notification services to improve read performance.
@@ -33,6 +35,7 @@ Services communicate through REST APIs and asynchronous messaging via RabbitMQ. 
 - **MySQL** (for Prisma ORM)
 - **Redis** (used in User, Task and Notification services)
 - **RabbitMQ**
+- **Socket.IO** (real-time communication between Notification Service and client)
 - **JWT Authentication**
 - **Docker & Docker Compose**
 - **http-proxy-middleware** for API Gateway
@@ -44,6 +47,7 @@ Services communicate through REST APIs and asynchronous messaging via RabbitMQ. 
 - **Next.js** (React + TypeScript)
 - **Zustand** – Lightweight state management
 - **Axios** – For API requests
+- **Socket.IO Client** – For receiving real-time notifications
 - **Tailwind CSS**
 - **shadcn/ui** – Accessible, customizable UI components (built on Radix UI & Tailwind)
 - **Swagger UI** – For API documentation
@@ -62,8 +66,8 @@ Services communicate through REST APIs and asynchronous messaging via RabbitMQ. 
 ├── .husky/                 # ⚙️ Git hooks for pre-commit, pre-push
 ├── api-gateway/            # 🚪 Centralized routing & auth handling
 ├── auth-service/           # 🔐 Handles registration, login, and JWT
-├── client/                 # 🖥️ Next.js frontend (Zustand, WIP)
-├── notification-service/   # 📣 Notification management (Prisma + RabbitMQ)
+├── client/                 # 🖥️ Next.js frontend (Zustand + Socket.IO)
+├── notification-service/   # 📣 Notification management (Prisma + RabbitMQ + Socket.IO)
 ├── task-service/           # ✅ Task management (MongoDB + Redis)
 ├── user-service/           # 👤 User data (MongoDB + Redis)
 ├── .gitignore              # 🚫 Git ignore rules
@@ -103,6 +107,7 @@ This will:
 - 🐳 Start MongoDB, MySQL, Redis, and RabbitMQ containers
 - 🚀 Launch all backend services with hot-reload enabled via ts-node-dev
 - 🌐 Expose APIs through the API Gateway
+- ⚡ Enable real-time notification streaming via Socket.IO
 
 ---
 
