@@ -3,6 +3,7 @@ import swaggerUi from 'swagger-ui-express';
 import swaggerSpec from './docs/swagger';
 import bodyParser from 'body-parser';
 import taskRoutes from './routes/taskRoutes';
+import { verifyServiceSecret } from './middlewares/verifyServiceSecret';
 import errorHandler from './middlewares/errorMiddleware';
 import logger from './utils/logger';
 
@@ -17,6 +18,8 @@ app.use((req: Request, _res: Response, next: NextFunction) => {
 });
 
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
+app.use(verifyServiceSecret);
 
 app.use(taskRoutes);
 

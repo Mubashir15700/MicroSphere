@@ -16,7 +16,7 @@ import jwt from 'jsonwebtoken';
 import app from '../src/app';
 import User from '../src/models/userModel';
 import redisClient from '../src/services/redisService';
-import { MONGO_URI, SHARED_SECRET } from '../src/config/envConfig';
+import { MONGO_URI, SERVICE_SECRET, INTERNAL_AUTH } from '../src/config/envConfig';
 
 describe('User Service', () => {
   const testUser = {
@@ -57,7 +57,8 @@ describe('User Service', () => {
     it('should create a new user', async () => {
       const res = await request(app)
         .post('/')
-        .set('x-service-secret', SHARED_SECRET)
+        .set('x-service-secret', SERVICE_SECRET)
+        .set('x-internal-auth', INTERNAL_AUTH)
         .send(testUser);
       expect(res.status).toBe(201);
       expect(res.body).toHaveProperty('id');
@@ -65,10 +66,15 @@ describe('User Service', () => {
     });
 
     it('should fail to create user with existing email', async () => {
-      await request(app).post('/').set('x-service-secret', SHARED_SECRET).send(testUser);
+      await request(app)
+        .post('/')
+        .set('x-service-secret', SERVICE_SECRET)
+        .send(testUser)
+        .set('x-internal-auth', INTERNAL_AUTH);
       const res = await request(app)
         .post('/')
-        .set('x-service-secret', SHARED_SECRET)
+        .set('x-service-secret', SERVICE_SECRET)
+        .set('x-internal-auth', INTERNAL_AUTH)
         .send(testUser);
       expect(res.status).toBe(400);
     });
@@ -76,10 +82,15 @@ describe('User Service', () => {
 
   describe('GET /email/:email', () => {
     it('should return user by email', async () => {
-      await request(app).post('/').set('x-service-secret', SHARED_SECRET).send(testUser);
+      await request(app)
+        .post('/')
+        .set('x-service-secret', SERVICE_SECRET)
+        .send(testUser)
+        .set('x-internal-auth', INTERNAL_AUTH);
       const res = await request(app)
         .get(`/email/${testUser.email}`)
-        .set('x-service-secret', SHARED_SECRET);
+        .set('x-service-secret', SERVICE_SECRET)
+        .set('x-internal-auth', INTERNAL_AUTH);
       expect(res.status).toBe(200);
       expect(res.body.email).toBe(testUser.email);
     });
@@ -87,14 +98,18 @@ describe('User Service', () => {
     it('should return 404 if user not found', async () => {
       const res = await request(app)
         .get('/email/unknown@example.com')
-        .set('x-service-secret', SHARED_SECRET);
+        .set('x-service-secret', SERVICE_SECRET)
+        .set('x-internal-auth', INTERNAL_AUTH);
       expect(res.status).toBe(404);
     });
   });
 
   describe('GET / (all users, protected)', () => {
     beforeEach(async () => {
-      const user = await request(app).post('/').send(testUser);
+      const user = await request(app)
+        .post('/')
+        .send(testUser)
+        .set('x-service-secret', SERVICE_SECRET);
       userId = user.body.id;
       // simulate token signing (should match your JWT secret)
       token = jwt.sign(
@@ -105,12 +120,15 @@ describe('User Service', () => {
     });
 
     it('should return 401 without token', async () => {
-      const res = await request(app).get('/').set('x-service-secret', SHARED_SECRET);
+      const res = await request(app).get('/').set('x-service-secret', SERVICE_SECRET);
       expect(res.status).toBe(401);
     });
 
     it('should return all users with token', async () => {
-      const res = await request(app).get('/').set('Authorization', `Bearer ${token}`);
+      const res = await request(app)
+        .get('/')
+        .set('Authorization', `Bearer ${token}`)
+        .set('x-service-secret', SERVICE_SECRET);
       expect(res.status).toBe(200);
       expect(Array.isArray(res.body)).toBe(true);
     });
@@ -121,6 +139,7 @@ describe('User Service', () => {
       const user = await request(app)
         .post('/')
         .set('Authorization', `Bearer ${token}`)
+        .set('x-service-secret', SERVICE_SECRET)
         .send(testUser);
       userId = user.body.id;
       token = jwt.sign(
@@ -133,19 +152,25 @@ describe('User Service', () => {
     it('should return user by ID', async () => {
       const res = await request(app)
         .get(`/userId/${userId}`)
-        .set('Authorization', `Bearer ${token}`);
+        .set('Authorization', `Bearer ${token}`)
+        .set('x-service-secret', SERVICE_SECRET);
       expect(res.status).toBe(200);
       expect(res.body.email).toBe(testUser.email);
     });
 
     it('should return 404 if user not found', async () => {
       const invalidId = new mongoose.Types.ObjectId().toString();
-      const res = await request(app).get(`/${invalidId}`).set('Authorization', `Bearer ${token}`);
+      const res = await request(app)
+        .get(`/${invalidId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .set('x-service-secret', SERVICE_SECRET);
       expect(res.status).toBe(404);
     });
 
     it('should return 401 without token', async () => {
-      const res = await request(app).get(`/userId/${userId}`);
+      const res = await request(app)
+        .get(`/userId/${userId}`)
+        .set('x-service-secret', SERVICE_SECRET);
       expect(res.status).toBe(401);
     });
   });

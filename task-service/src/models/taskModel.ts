@@ -20,7 +20,11 @@ const TaskSchema = new Schema<ITask>(
       enum: ['pending', 'in-progress', 'completed'],
       default: 'pending',
     },
-    dueDate: { type: Date, required: false },
+    dueDate: {
+      type: Date,
+      required: false,
+      default: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+    },
   },
   { timestamps: true }
 );

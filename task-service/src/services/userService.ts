@@ -1,6 +1,6 @@
 import { Request } from 'express';
 import axios from 'axios';
-import { USER_SERVICE_URL } from '../config/envConfig';
+import { USER_SERVICE_SECRET, USER_SERVICE_URL } from '../config/envConfig';
 
 export const getUserByID = async (req: Request, userId: string) => {
   const authHeader = req.headers['authorization'];
@@ -9,6 +9,7 @@ export const getUserByID = async (req: Request, userId: string) => {
     const response = await axios.get(`${USER_SERVICE_URL}/userId/${userId}`, {
       headers: {
         Authorization: authHeader || '',
+        'x-service-secret': USER_SERVICE_SECRET,
       },
     });
     return response.data;

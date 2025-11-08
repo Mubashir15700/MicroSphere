@@ -1,12 +1,23 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { TaskSchema } from '@/app/lib/definitions';
+import { useUsersStore } from '@/store/usersStore';
+import { fetchWithAuth } from '@/lib/fetchClient';
 
 export interface TaskFormData {
+  id?: string;
   title: string;
   description: string;
   status: 'pending' | 'in-progress' | 'completed';
@@ -18,9 +29,17 @@ interface TaskFormProps {
   initialData?: TaskFormData;
   onSubmit: (data: TaskFormData) => void;
   isSubmitting?: boolean;
+  actionError?: string | null;
 }
 
-export default function TaskForm({ initialData, onSubmit, isSubmitting }: TaskFormProps) {
+export default function TaskForm({
+  initialData,
+  onSubmit,
+  isSubmitting,
+  actionError,
+}: TaskFormProps) {
+  const { users } = useUsersStore();
+
   const [formData, setFormData] = useState<TaskFormData>(
     initialData || {
       title: '',
@@ -30,6 +49,8 @@ export default function TaskForm({ initialData, onSubmit, isSubmitting }: TaskFo
       assigneeId: '',
     }
   );
+  const [isLoading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -40,8 +61,45 @@ export default function TaskForm({ initialData, onSubmit, isSubmitting }: TaskFo
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(formData);
+
+    const validatedFields = TaskSchema.safeParse({
+      title: formData.title,
+      description: formData.description,
+      status: formData.status,
+      dueDate: formData.dueDate,
+      assigneeId: formData.assigneeId,
+    });
+
+    if (!validatedFields.success) {
+      setError(validatedFields.error.issues.map((issue) => issue.message).join(', '));
+      return;
+    }
+
+    setError(null);
+
+    if (onSubmit) onSubmit(formData);
   };
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      setLoading(true);
+      const response = await fetchWithAuth('/api/user?action=getAll');
+
+      if (response.ok) {
+        const data = await response.json();
+        useUsersStore.setState({ users: data });
+      } else {
+        console.error('Failed to fetch users');
+        setError('Failed to fetch users');
+      }
+
+      setLoading(false);
+    };
+
+    if (!users.length) fetchUsers();
+  }, [users]);
+
+  const dueDate = formData.dueDate ? new Date(formData.dueDate).toISOString().split('T')[0] : '';
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -63,17 +121,24 @@ export default function TaskForm({ initialData, onSubmit, isSubmitting }: TaskFo
 
       <div>
         <Label htmlFor="status">Status</Label>
-        <select
-          id="status"
-          name="status"
+        <Select
           value={formData.status}
-          onChange={handleChange}
-          className="w-full rounded-md border p-2 dark:border-gray-700 dark:bg-gray-800"
+          onValueChange={(value: 'pending' | 'in-progress' | 'completed') =>
+            setFormData((prev) => ({ ...prev, status: value }))
+          }
         >
-          <option value="pending">Pending</option>
-          <option value="in-progress">In Progress</option>
-          <option value="completed">Completed</option>
-        </select>
+          <SelectTrigger
+            id="status"
+            className="w-full rounded-md border p-2 dark:border-gray-700 dark:bg-gray-800"
+          >
+            <SelectValue placeholder="Select status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="pending">Pending</SelectItem>
+            <SelectItem value="in-progress">In Progress</SelectItem>
+            <SelectItem value="completed">Completed</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <div>
@@ -82,23 +147,38 @@ export default function TaskForm({ initialData, onSubmit, isSubmitting }: TaskFo
           id="dueDate"
           name="dueDate"
           type="date"
-          value={formData.dueDate}
+          value={dueDate}
           onChange={handleChange}
           required
         />
       </div>
 
       <div>
-        <Label htmlFor="assigneeId">Assignee ID (optional)</Label>
-        <Input
-          id="assigneeId"
-          name="assigneeId"
-          value={formData.assigneeId}
-          onChange={handleChange}
-        />
+        <Label htmlFor="assigneeId">Assignee (optional)</Label>
+        <Select
+          value={formData.assigneeId || ''}
+          onValueChange={(value) => setFormData((prev) => ({ ...prev, assigneeId: value }))}
+          disabled={isLoading}
+        >
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Select" />
+          </SelectTrigger>
+          <SelectContent>
+            {users
+              .filter((user) => user.role === 'user')
+              .map((user) => (
+                // eslint-disable-next-line
+                <SelectItem key={(user as any)._id} value={(user as any)._id}>
+                  {user.name}
+                </SelectItem>
+              ))}
+          </SelectContent>
+        </Select>
       </div>
 
-      <Button type="submit" disabled={isSubmitting}>
+      {(error || actionError) && <p className="text-red-600">{error || actionError}</p>}
+
+      <Button type="submit" disabled={isSubmitting || isLoading}>
         {isSubmitting ? 'Submitting...' : 'Submit'}
       </Button>
     </form>

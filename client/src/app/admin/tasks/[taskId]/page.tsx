@@ -1,9 +1,11 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { fetchWithAuth } from '@/lib/fetchClient';
+import { useTasksStore } from '@/store/tasksStore';
 
 interface Task {
   id: string;
@@ -14,49 +16,64 @@ interface Task {
   assigneeId?: string;
 }
 
-interface AdminTaskDetailsPageProps {
-  params: {
-    taskId: string;
-  };
-}
-
-export default function AdminTaskDetailsPage({ params }: AdminTaskDetailsPageProps) {
-  const { taskId } = params;
+export default function AdminTaskDetailsPage() {
+  const params = useParams();
   const router = useRouter();
+
+  const { tasks } = useTasksStore();
 
   const [task, setTask] = useState<Task | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // TODO: Fetch task details from your API by taskId
-    setLoading(true);
-    setTimeout(() => {
-      // mock data
+    if (!params?.taskId) return;
+    const task = tasks.find((t) => t.id === params?.taskId);
+
+    if (task) {
       setTask({
-        id: taskId,
-        title: 'Prepare presentation',
-        description: 'Prepare slides and notes for the Q3 presentation.',
-        status: 'in-progress',
-        dueDate: '2025-09-25',
-        assigneeId: 'user123',
+        title: task.title,
+        description: task.description,
+        dueDate: task.dueDate,
+        status: task.status,
+        id: task.id,
+        assigneeId: task.assigneeId,
       });
       setLoading(false);
-    }, 800);
-  }, [taskId]);
+      return;
+    } else {
+      fetchWithAuth(`/api/task?action=getById&id=${params.taskId}`)
+        .then((res) => res.json())
+        .then((data) => {
+          setTask(data);
+          setLoading(false);
+        })
+        .catch(() => setLoading(false));
+    }
+  }, [params?.taskId, tasks]);
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!confirm('Are you sure you want to delete this task?')) return;
 
-    // TODO: Delete task API call here
-    alert('Task deleted!');
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const res = await fetchWithAuth(`/api/task?action=delete&id=${(task as any)?._id}`, {
+        method: 'DELETE',
+      });
 
-    // Redirect back to admin tasks list after delete
-    router.push('/admin/tasks');
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data?.message || 'Failed to delete task');
+      }
+
+      // Redirect back to admin tasks list after delete
+      router.push('/admin/tasks');
+    } catch (err) {
+      console.error(err);
+      alert((err as Error).message);
+    }
   };
 
   if (loading) return <p className="mt-10 text-center">Loading task details...</p>;
-  if (error) return <p className="mt-10 text-center text-red-600">{error}</p>;
   if (!task) return <p className="mt-10 text-center">Task not found.</p>;
 
   return (

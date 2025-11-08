@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { fetchWithAuth } from '@/lib/fetchClient';
 
 interface User {
   id: string;
@@ -14,18 +15,71 @@ interface User {
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deleting, setDeleting] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    // TODO: Replace with real API call to fetch users
-    setTimeout(() => {
-      setUsers([
-        { id: 'u1', name: 'Alice Smith', email: 'alice@example.com', role: 'user' },
-        { id: 'u2', name: 'Bob Admin', email: 'bob@example.com', role: 'admin' },
-      ]);
+  const getUsers = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const res = await fetchWithAuth('/api/user?action=getAll');
+
+      if (!res.ok) {
+        throw new Error('Failed to fetch users');
+      }
+
+      const usersData = await res.json();
+
+      setUsers(
+        usersData
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          .filter((user: any) => user.role !== 'admin')
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          .map((user: any) => ({
+            id: user._id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+          }))
+      );
+    } catch (err) {
+      console.error(err);
+      setError((err as Error).message);
+    } finally {
       setLoading(false);
-    }, 500);
-  }, []);
+    }
+  };
+
+  const deleteUser = async (userId: string, userName: string) => {
+    if (!confirm(`Are you sure you want to delete ${userName}?`)) return;
+
+    try {
+      setDeleting(userId);
+
+      const res = await fetchWithAuth(`/api/user?action=delete&id=${userId}`, {
+        method: 'DELETE',
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data?.message || 'Failed to delete user');
+      }
+
+      setUsers((prev) => prev.filter((u) => u.id !== userId));
+    } catch (err) {
+      console.error(err);
+      alert((err as Error).message);
+    } finally {
+      setDeleting(null);
+    }
+  };
+
+  useEffect(() => {
+    if (!users.length) {
+      getUsers();
+    }
+  }, [users.length]);
 
   if (loading) return <p className="mt-10 text-center">Loading users...</p>;
   if (error) return <p className="mt-10 text-center text-red-600">{error}</p>;
@@ -66,9 +120,9 @@ export default function AdminUsersPage() {
                 <Button
                   size="sm"
                   variant="destructive"
-                  onClick={() => alert(`Delete user ${user.name}`)}
+                  onClick={() => deleteUser(user.id, user.name)}
                 >
-                  Delete
+                  {deleting === user.id ? 'Deleting...' : 'Delete'}
                 </Button>
               </div>
             </li>

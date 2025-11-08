@@ -16,7 +16,7 @@ Services communicate through REST APIs and asynchronous messaging via RabbitMQ. 
 - **Client (Next.js)** – React-based frontend using Zustand for global state management (under development).
 - **MongoDB** – Stores persistent data for users and tasks.
 - **Prisma ORM with MySQL** – For notifications persistence.
-- **Redis** – Caching layer for User and Task services to improve read performance.
+- **Redis** – Caching layer for User, Task and Notification services to improve read performance.
 - **RabbitMQ** – Message broker for asynchronous, event-driven communication between services.
 - **Swagger** – API documentation available for backend services.
 - **Husky** – Git hooks for enforcing code quality and pre-commit checks.
@@ -31,7 +31,7 @@ Services communicate through REST APIs and asynchronous messaging via RabbitMQ. 
 - **TypeScript**
 - **MongoDB**
 - **MySQL** (for Prisma ORM)
-- **Redis** (used in User and Task services)
+- **Redis** (used in User, Task and Notification services)
 - **RabbitMQ**
 - **JWT Authentication**
 - **Docker & Docker Compose**
@@ -45,6 +45,7 @@ Services communicate through REST APIs and asynchronous messaging via RabbitMQ. 
 - **Zustand** – Lightweight state management
 - **Axios** – For API requests
 - **Tailwind CSS**
+- **shadcn/ui** – Accessible, customizable UI components (built on Radix UI & Tailwind)
 - **Swagger UI** – For API documentation
 
 ### 🧪 Dev Tooling
@@ -89,7 +90,7 @@ Services communicate through REST APIs and asynchronous messaging via RabbitMQ. 
 
 ```bash
 git clone https://github.com/Mubashir15700/MicroSphere.git
-cd nodejs-microservices
+cd MicroSphere
 ```
 
 2. **Start All Services**
@@ -99,7 +100,7 @@ cd nodejs-microservices
 This will:
 
 - 🔧 Build Docker images for all services
-- 🐳 Start MongoDB, Redis, and RabbitMQ containers
+- 🐳 Start MongoDB, MySQL, Redis, and RabbitMQ containers
 - 🚀 Launch all backend services with hot-reload enabled via ts-node-dev
 - 🌐 Expose APIs through the API Gateway
 
@@ -113,7 +114,7 @@ Each backend service exposes Swagger UI for exploring and testing APIs.
 
 Service Swagger URL:
 
-- **Auth Service** - http://localhost:3001/api-docs
-- **User Service** - http://localhost:3002/api-docs
-- **Task Service** - http://localhost:3003/api-docs
-- **Notification Service** - http://localhost:3004/api-docs
+- **Auth Service** - http://localhost:3000/auth/api-docs
+- **User Service** - http://localhost:3000/users/api-docs
+- **Task Service** - http://localhost:3000/tasks/api-docs
+- **Notification Service** - http://localhost:3000/notifications/api-docs

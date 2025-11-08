@@ -3,7 +3,7 @@ services:
     image: mongodb/mongodb-community-server:latest
     container_name: mongo
     ports:
-      - "27017:27017"
+      - "27017"
     volumes:
       - mongo-data:/data/db
 
@@ -18,7 +18,7 @@ services:
       MYSQL_PASSWORD: notify_pass
     # command: --default-authentication-plugin=mysql_native_password
     ports:
-      - "3307:3306"
+      - "3307"
     volumes:
       - mysql_data:/var/lib/mysql
 
@@ -26,14 +26,14 @@ services:
     image: rabbitmq:3-management
     container_name: rabbitmq
     ports:
-      - "5672:5672" # RabbitMQ server
-      - "15672:15672" # Management UI
+      - "5672" # RabbitMQ server
+      - "15672" # Management UI
 
   redis:
     image: redis:6
     container_name: redis-server
     ports:
-      - "6379:6379"
+      - "6379"
     command:
       [
         "redis-server",
@@ -47,7 +47,7 @@ services:
     build: ./api-gateway
     container_name: api-gateway
     ports:
-      - "3000:3000"
+      - "3000:3000" # expose only the gateway
     depends_on:
       - auth-service
       - user-service
@@ -61,7 +61,7 @@ services:
     build: ./auth-service
     container_name: auth-service
     ports:
-      - "3001:3001"
+      - "3001" # exposed internally to Docker network only
     depends_on:
       - user-service
       - rabbitmq
@@ -73,7 +73,7 @@ services:
     build: ./user-service
     container_name: user-service
     ports:
-      - "3002:3002"
+      - "3002"
     depends_on:
       - mongo
       - redis
@@ -85,7 +85,7 @@ services:
     build: ./task-service
     container_name: task-service
     ports:
-      - "3003:3003"
+      - "3003"
     depends_on:
       - mongo
       - rabbitmq
@@ -111,7 +111,7 @@ services:
     build: ./client
     container_name: nextjs-client
     ports:
-      - "5173:5173"
+      - "5173:5173" # expose only the client
     volumes:
       - ./client:/app
       - /app/node_modules

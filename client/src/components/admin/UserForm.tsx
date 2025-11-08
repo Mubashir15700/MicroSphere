@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
+import { UserSchema } from '@/app/lib/definitions';
 
 export interface UserFormData {
   name: string;
@@ -17,6 +18,7 @@ interface UserFormProps {
   onSubmit?: (data: UserFormData) => void;
   isSubmitting?: boolean;
   isViewOnly?: boolean;
+  actionError?: string | null;
 }
 
 export default function UserForm({
@@ -24,6 +26,7 @@ export default function UserForm({
   onSubmit,
   isSubmitting = false,
   isViewOnly = false,
+  actionError,
 }: UserFormProps) {
   const [formData, setFormData] = useState<UserFormData>(
     initialData || {
@@ -33,6 +36,7 @@ export default function UserForm({
       role: 'user',
     }
   );
+  const [error, setError] = useState<string | null>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -41,6 +45,21 @@ export default function UserForm({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    const validatedFields = UserSchema.safeParse({
+      name: formData.name,
+      email: formData.email,
+      role: formData.role,
+      ...(initialData ? {} : { password: formData.password }),
+    });
+
+    if (!validatedFields.success) {
+      setError(validatedFields.error.issues.map((issue) => issue.message).join(', '));
+      return;
+    }
+
+    setError(null);
+
     if (onSubmit) onSubmit(formData);
   };
 
@@ -71,7 +90,7 @@ export default function UserForm({
         />
       </div>
 
-      {!isViewOnly && (
+      {!isViewOnly && !initialData && (
         <div>
           <Label htmlFor="password">Password</Label>
           <Input
@@ -99,6 +118,8 @@ export default function UserForm({
           <option value="admin">Admin</option>
         </select>
       </div>
+
+      {(error || actionError) && <p className="text-red-600">{error || actionError}</p>}
 
       {!isViewOnly && (
         <Button type="submit" disabled={isSubmitting}>

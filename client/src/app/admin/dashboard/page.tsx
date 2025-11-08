@@ -3,52 +3,65 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-
-interface User {
-  id: string;
-  name: string;
-  email: string;
-}
-
-interface Task {
-  id: string;
-  title: string;
-  status: 'pending' | 'in-progress' | 'completed';
-  dueDate: string;
-  assigneeId?: string;
-}
+import { useUsersStore } from '@/store/usersStore';
+import { useTasksStore } from '@/store/tasksStore';
+import { fetchWithAuth } from '@/lib/fetchClient';
 
 export default function AdminDashboard() {
-  const [users, setUsers] = useState<User[]>([]);
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [loading, setLoading] = useState(true);
+  const usersStore = useUsersStore();
+  const tasksStore = useTasksStore();
+
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    setLoading(true);
-    // Replace with real API calls
-    setTimeout(() => {
-      setUsers([
-        { id: 'u1', name: 'Alice Johnson', email: 'alice@example.com' },
-        { id: 'u2', name: 'Bob Smith', email: 'bob@example.com' },
+  const fetchData = async () => {
+    if (loading) return;
+    try {
+      setLoading(true);
+      setError(null);
+
+      const [usersRes, tasksRes] = await Promise.all([
+        fetchWithAuth('/api/user?action=getAll'),
+        fetchWithAuth('/api/task?action=getAll'),
       ]);
-      setTasks([
-        {
-          id: 't1',
-          title: 'Prepare presentation',
-          status: 'in-progress',
-          dueDate: '2025-09-25',
-          assigneeId: 'u1',
-        },
-        {
-          id: 't2',
-          title: 'Update documentation',
-          status: 'pending',
-          dueDate: '2025-09-28',
-        },
-      ]);
+
+      if (!usersRes.ok) throw new Error('Failed to fetch users');
+      if (!tasksRes.ok) throw new Error('Failed to fetch tasks');
+
+      const usersData = await usersRes.json();
+      const tasksData = await tasksRes.json();
+
+      usersStore.setUsers(
+        usersData
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          .filter((user: any) => user.role !== 'admin')
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          .map((user: any) => ({
+            id: user._id,
+            name: user.name,
+            email: user.email,
+          }))
+      );
+      tasksStore.setTasks(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        tasksData.map((task: any) => ({
+          id: task._id,
+          title: task.title,
+          description: task.description,
+          status: task.status,
+          dueDate: task.dueDate,
+        }))
+      );
+    } catch {
+      setError('An unexpected error occurred');
+    } finally {
       setLoading(false);
-    }, 800);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (loading) return <p className="mt-10 text-center">Loading dashboard...</p>;
@@ -61,11 +74,15 @@ export default function AdminDashboard() {
       {/* Summary Section */}
       <div className="flex justify-around rounded-md bg-gray-100 p-6 text-center dark:bg-gray-700">
         <div>
-          <p className="text-3xl font-semibold text-gray-900 dark:text-white">{users.length}</p>
+          <p className="text-3xl font-semibold text-gray-900 dark:text-white">
+            {usersStore.users.length}
+          </p>
           <p className="text-gray-700 dark:text-gray-300">Users</p>
         </div>
         <div>
-          <p className="text-3xl font-semibold text-gray-900 dark:text-white">{tasks.length}</p>
+          <p className="text-3xl font-semibold text-gray-900 dark:text-white">
+            {tasksStore.tasks.length}
+          </p>
           <p className="text-gray-700 dark:text-gray-300">Tasks</p>
         </div>
       </div>
@@ -83,11 +100,11 @@ export default function AdminDashboard() {
       {/* Users List */}
       <section>
         <h2 className="mb-4 text-2xl font-semibold text-gray-900 dark:text-white">Users</h2>
-        {users.length === 0 ? (
+        {usersStore.users.length === 0 ? (
           <p className="text-gray-700 dark:text-gray-300">No users found.</p>
         ) : (
           <ul className="space-y-3">
-            {users.map((user) => (
+            {usersStore.users.map((user) => (
               <li
                 key={user.id}
                 className="flex items-center justify-between rounded-md border border-gray-300 p-3 dark:border-gray-700"
@@ -110,11 +127,11 @@ export default function AdminDashboard() {
       {/* Tasks List */}
       <section>
         <h2 className="mb-4 text-2xl font-semibold text-gray-900 dark:text-white">Tasks</h2>
-        {tasks.length === 0 ? (
+        {tasksStore.tasks.length === 0 ? (
           <p className="text-gray-700 dark:text-gray-300">No tasks found.</p>
         ) : (
           <ul className="space-y-3">
-            {tasks.map((task) => (
+            {tasksStore.tasks.map((task) => (
               <li
                 key={task.id}
                 className="flex items-center justify-between rounded-md border border-gray-300 p-3 dark:border-gray-700"

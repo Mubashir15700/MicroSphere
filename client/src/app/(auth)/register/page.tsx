@@ -3,21 +3,95 @@
 import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useAuthStore } from '@/store/authStore';
+import { RegisterFormSchema, RegisterFormState } from '@/app/lib/definitions';
+import { fetchWithAuth } from '@/lib/fetchClient';
 
 export default function RegisterPage() {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
+  const router = useRouter();
+  const loginUser = useAuthStore((s) => s.login);
 
-  const handleRegister = async (e: React.FormEvent) => {
+  const [state, setState] = useState<RegisterFormState>();
+  const [pending, setPending] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setLoading(true);
+    e.stopPropagation();
 
-    // TODO: handle register logic here
+    const validatedFields = RegisterFormSchema.safeParse({
+      name: e.currentTarget.username.value,
+      email: e.currentTarget.email.value,
+      password: e.currentTarget.password.value,
+    });
 
-    setLoading(false);
+    if (!validatedFields.success) {
+      setState({
+        errors: validatedFields.error.flatten().fieldErrors,
+      });
+      return;
+    }
+
+    setState({ errors: undefined });
+
+    setPending(true);
+
+    try {
+      const response = await fetchWithAuth('/api/auth?action=register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(validatedFields.data),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setState({
+          errors: {
+            email: [data.message || 'Invalid credentials'],
+          },
+        });
+        return;
+      }
+
+      const profileResponse = await fetchWithAuth('/api/auth?action=profile', {
+        method: 'GET',
+      });
+
+      const profileData = await profileResponse.json();
+
+      if (!profileResponse.ok) {
+        setState({
+          errors: {
+            email: [profileData.message || 'Failed to fetch profile data.'],
+          },
+        });
+        return;
+      }
+
+      loginUser({
+        id: profileData._id,
+        name: profileData.name,
+        email: profileData.email,
+        role: profileData.role,
+      });
+
+      const role = profileData.role;
+      const route = role === 'admin' ? '/admin/dashboard' : '/dashboard';
+      router.replace(route);
+    } catch (error) {
+      console.error('Registration failed', error);
+      setState({
+        errors: {
+          email: ['An unexpected error occurred. Please try again later.'],
+        },
+      });
+    } finally {
+      setPending(false);
+    }
   };
 
   return (
@@ -27,22 +101,16 @@ export default function RegisterPage() {
           Create your account
         </h2>
 
-        <form onSubmit={handleRegister} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label
-              htmlFor="name"
+              htmlFor="username"
               className="block text-sm font-medium text-gray-700 dark:text-gray-300"
             >
               Name
             </label>
-            <Input
-              id="name"
-              type="text"
-              placeholder="Your Name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-            />
+            <Input id="username" name="username" type="text" placeholder="Your Name" required />
+            {state?.errors?.name && <p className="text-red-600">{state.errors.name}</p>}
           </div>
 
           <div>
@@ -52,14 +120,8 @@ export default function RegisterPage() {
             >
               Email
             </label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
+            <Input id="email" name="email" type="email" placeholder="you@example.com" required />
+            {state?.errors?.email && <p className="text-red-600">{state.errors.email}</p>}
           </div>
 
           <div>
@@ -69,18 +131,12 @@ export default function RegisterPage() {
             >
               Password
             </label>
-            <Input
-              id="password"
-              type="password"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
+            <Input id="password" name="password" type="password" placeholder="••••••••" required />
+            {state?.errors?.password && <p className="text-red-600">{state.errors.password}</p>}
           </div>
 
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? 'Creating account...' : 'Register'}
+          <Button type="submit" className="w-full" disabled={pending}>
+            {pending ? 'Registering...' : 'Register'}
           </Button>
         </form>
 

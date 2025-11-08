@@ -1,9 +1,5 @@
 import { Router } from 'express';
-import {
-  verifyToken,
-  requireAdmin,
-  validateServiceSecretOrAdmin,
-} from '../middlewares/authMiddleware';
+import { verifyToken, requireAdmin, verifyUserOrService } from '../middlewares/authMiddleware';
 import {
   createUser,
   getUserByEmail,
@@ -17,13 +13,13 @@ import {
 
 const router = Router();
 
-router.post('/', validateServiceSecretOrAdmin, createUser);
-router.get('/email/:email', validateServiceSecretOrAdmin, getUserByEmail);
+router.post('/', verifyUserOrService, createUser);
+router.get('/email/:email', verifyUserOrService, getUserByEmail);
 router.get('/', verifyToken, requireAdmin, getAllUsers);
 router.get('/userId/:id', verifyToken, getUserById);
 router.get('/profile', verifyToken, getProfile);
 router.put('/userId/:id', verifyToken, updateUser);
-router.get('/admin/id', validateServiceSecretOrAdmin, getAdminId);
+router.get('/admin/id', verifyUserOrService, getAdminId);
 router.delete('/', verifyToken, requireAdmin, deleteUsers);
 
 export default router;

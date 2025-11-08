@@ -2,8 +2,12 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { User } from 'lucide-react'; // Import the icon
+import { useRouter } from 'next/navigation';
+import { User, LogOut } from 'lucide-react'; // Import the icon
+import { useAuthStore } from '@/store/authStore';
 import { Button } from '@/components/ui/button';
+import { NotificationMenu } from '@/components/NotificationMenu';
+import { fetchWithAuth } from '@/lib/fetchClient';
 
 interface Task {
   id: string;
@@ -13,9 +17,23 @@ interface Task {
 }
 
 export default function UserDashboard() {
+  const router = useRouter();
+  const logoutUser = useAuthStore((s) => s.logout);
+
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const handleLogout = async () => {
+    await fetchWithAuth('/api/auth?action=logout', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    await logoutUser();
+    router.replace('/login');
+  };
 
   useEffect(() => {
     // Simulate fetching user tasks, replace with real API call
@@ -55,6 +73,18 @@ export default function UserDashboard() {
             <User className="h-8 w-8 text-gray-600 dark:text-gray-300" />
           </Button>
         </Link>
+        <div className="ml-5">
+          <NotificationMenu notifications={[]} />
+        </div>
+        <Button
+          size="icon"
+          variant="outline"
+          className="ml-5 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-600"
+          onClick={handleLogout}
+          type="button"
+        >
+          <LogOut className="h-8 w-8" />
+        </Button>
       </div>
 
       <h1 className="mb-6 text-3xl font-bold text-gray-900 dark:text-white">Your Tasks</h1>

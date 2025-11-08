@@ -1,5 +1,6 @@
 import { Channel, ConsumeMessage } from 'amqplib';
 import { createNotification } from '../services/notificationService';
+import { getIO } from '../socket';
 import logger from '../utils/logger';
 
 const startConsuming = (channel: Channel, queueName: string) => {
@@ -30,9 +31,23 @@ const startConsuming = (channel: Channel, queueName: string) => {
 
         try {
           await createNotification(userId, msgText, queueName === 'taskQueue' ? 'task' : 'user');
+
+          try {
+            const io = getIO();
+            io.to(userId).emit('notification:new', {
+              title: 'New Notification',
+              message: msgText,
+              type: queueName === 'taskQueue' ? 'task' : 'user',
+              createdAt: new Date(),
+            });
+            logger.info(`Real-time notification sent to user ${userId}`);
+          } catch (socketErr: any) {
+            logger.error(`Socket.IO emit error: ${socketErr.message}`);
+          }
+
           channel.ack(msg);
         } catch (err) {
-          logger.error(`Failed to create notification: ${err}`);
+          logger.error(`Failed to process notification: ${err}`);
           channel.nack(msg, false, false); // Optionally requeue
         }
       });
