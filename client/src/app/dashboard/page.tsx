@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { User, LogOut } from 'lucide-react'; // Import the icon
 import { useAuthStore } from '@/store/authStore';
 import { Button } from '@/components/ui/button';
-import { useRouter } from 'next/navigation';
+import { NotificationMenu } from '@/components/NotificationMenu';
 import { fetchWithAuth } from '@/lib/fetchClient';
 
 interface Task {
@@ -72,6 +73,9 @@ export default function UserDashboard() {
             <User className="h-8 w-8 text-gray-600 dark:text-gray-300" />
           </Button>
         </Link>
+        <div className="ml-5">
+          <NotificationMenu notifications={[]} />
+        </div>
         <Button
           size="icon"
           variant="outline"

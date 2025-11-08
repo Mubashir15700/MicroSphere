@@ -6,8 +6,9 @@ import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { NotificationMenu } from '@/components/NotificaitonMenu';
+import { NotificationMenu } from '@/components/NotificationMenu';
 import { useAuthStore } from '@/store/authStore';
+import { useSocket } from '@/contexts/SocketProvider';
 import { fetchWithAuth } from '@/lib/fetchClient';
 
 interface AdminShellProps {
@@ -20,8 +21,12 @@ export default function AdminShell({ children }: AdminShellProps) {
   const loginUser = useAuthStore((s) => s.login);
   const user = useAuthStore((s) => s.user);
   const logoutUser = useAuthStore((s) => s.logout);
+  const { socket } = useSocket();
 
   const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
+  const [notifications, setNotifications] = useState<
+    { id: number; createdAt: string; message: string; isRead: boolean }[]
+  >([]);
 
   useEffect(() => {
     async function fetchProfile() {
@@ -62,6 +67,45 @@ export default function AdminShell({ children }: AdminShellProps) {
       }
     }
   }, [user, loginUser, router]);
+
+  // Fetch notifications once
+  useEffect(() => {
+    if (isAuthorized) {
+      const fetchNotifications = async () => {
+        try {
+          const res = await fetchWithAuth('/api/notification?action=getAll', {
+            credentials: 'include',
+          });
+          if (res.ok) {
+            const data = await res.json();
+            setNotifications(data);
+          }
+        } catch (error) {
+          console.error('Error fetching notifications:', error);
+        }
+      };
+
+      fetchNotifications();
+    }
+  }, [isAuthorized]);
+
+  // Listen for real-time socket updates
+  useEffect(() => {
+    if (!socket) return;
+
+    socket.on('notification:new', (newNotification) => {
+      setNotifications((prev) => [newNotification, ...prev]);
+    });
+
+    socket.on('notification:delete', (deletedId) => {
+      setNotifications((prev) => prev.filter((n) => n.id !== deletedId));
+    });
+
+    return () => {
+      socket.off('notification:new');
+      socket.off('notification:delete');
+    };
+  }, [socket]);
 
   const handleLogout = async () => {
     await fetchWithAuth('/api/auth?action=logout', {
@@ -119,7 +163,7 @@ export default function AdminShell({ children }: AdminShellProps) {
         <header className="flex h-16 items-center justify-between border-b border-gray-200 bg-white px-6 dark:border-gray-700 dark:bg-gray-800">
           <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Admin</h1>
           <div>
-            <NotificationMenu />
+            <NotificationMenu notifications={notifications} />
             <Button
               size="icon"
               variant="outline"

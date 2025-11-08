@@ -30,6 +30,12 @@ export const connectToRabbitMQ = async () => {
       logger.error(`Could not connect to RabbitMQ: ${err}`);
       retries--;
       logger.info(`Retries left: ${retries}`);
+
+      if (retries === 0) {
+        logger.error('Giving up. Exiting.');
+        process.exit(1);
+      }
+
       await new Promise(res => setTimeout(res, RABBITMQ_RETRY_DELAY));
     }
   }

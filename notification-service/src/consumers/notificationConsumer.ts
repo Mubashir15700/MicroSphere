@@ -34,7 +34,7 @@ const startConsuming = (channel: Channel, queueName: string) => {
 
           try {
             const io = getIO();
-            io.to(userId).emit('notification', {
+            io.to(userId).emit('notification:new', {
               title: 'New Notification',
               message: msgText,
               type: queueName === 'taskQueue' ? 'task' : 'user',
