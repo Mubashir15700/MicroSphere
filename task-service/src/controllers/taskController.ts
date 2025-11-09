@@ -106,10 +106,6 @@ export const getTasksByUser = async (req: AuthenticatedRequest, res: Response) =
 
     const tasks = await Task.find({ assigneeId: userId }).sort({ createdAt: -1 });
 
-    if (tasks.length === 0) {
-      return res.status(404).json({ message: 'No tasks found for the user' });
-    }
-
     res.json(tasks);
   } catch (error: any) {
     handleError(res, error);
@@ -145,6 +141,8 @@ export const updateTask = async (req: AuthenticatedRequest, res: Response) => {
       return res.status(404).json({ message: 'Task not found' });
     }
 
+    const prevAssignee = task.assigneeId?.toString();
+
     const isAdmin = req.user?.role === 'admin';
     const isAssignee = task.assigneeId?.toString() === req.user?.id;
 
@@ -173,14 +171,14 @@ export const updateTask = async (req: AuthenticatedRequest, res: Response) => {
       }
     });
 
-    const wasAssigneeChanged =
-      isAdmin && updates.assigneeId && updates.assigneeId !== task.assigneeId?.toString();
+    const wasAssigneeChanged = isAdmin && updates.assigneeId && updates.assigneeId !== prevAssignee;
 
     const updatedTask = await task.save();
 
     // Send message to queue after successful save
     if (wasAssigneeChanged) {
       const assignee = await getUserByID(req, updates.assigneeId);
+
       if (!assignee) {
         return res.status(404).json({ message: 'Assignee not found' });
       }

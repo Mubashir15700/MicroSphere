@@ -8,20 +8,19 @@ import { useAuthStore } from '@/store/authStore';
 import { Button } from '@/components/ui/button';
 import { NotificationMenu } from '@/components/NotificationMenu';
 import { fetchWithAuth } from '@/lib/fetchClient';
-
-interface Task {
-  id: string;
-  title: string;
-  status: 'pending' | 'in-progress' | 'completed';
-  dueDate: string;
-}
+import { useTasksStore } from '@/store/tasksStore';
+import { useSocket } from '@/contexts/SocketProvider';
 
 export default function UserDashboard() {
   const router = useRouter();
-  const logoutUser = useAuthStore((s) => s.logout);
+  const { logout, user } = useAuthStore((s) => s);
+  const { setTasks, tasks } = useTasksStore((s) => s);
+  const { socket } = useSocket();
 
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [notifications, setNotifications] = useState<
+    { id: number; createdAt: string; message: string; isRead: boolean }[]
+  >([]);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleLogout = async () => {
@@ -31,29 +30,80 @@ export default function UserDashboard() {
         'Content-Type': 'application/json',
       },
     });
-    await logoutUser();
+    await logout();
     router.replace('/login');
   };
 
+  // Fetch notifications once
   useEffect(() => {
-    // Simulate fetching user tasks, replace with real API call
-    setTimeout(() => {
-      setTasks([
-        {
-          id: '1',
-          title: 'Finish report',
-          status: 'pending',
-          dueDate: '2025-09-30',
-        },
-        {
-          id: '2',
-          title: 'Fix bug #123',
-          status: 'in-progress',
-          dueDate: '2025-09-20',
-        },
-      ]);
+    if (user?.id) {
+      const fetchNotifications = async () => {
+        try {
+          const res = await fetchWithAuth('/api/notification?action=getAll', {
+            credentials: 'include',
+          });
+          if (res.ok) {
+            const data = await res.json();
+            setNotifications(data);
+          }
+        } catch (error) {
+          console.error('Error fetching notifications:', error);
+        }
+      };
+
+      fetchNotifications();
+    }
+  }, [user?.id]);
+
+  // Listen for real-time socket updates
+  useEffect(() => {
+    if (!socket) return;
+
+    socket.on('notification:new', (newNotification) => {
+      setNotifications((prev) => [newNotification, ...prev]);
+    });
+
+    socket.on('notification:delete', (deletedId) => {
+      setNotifications((prev) => prev.filter((n) => n.id !== deletedId));
+    });
+
+    return () => {
+      socket.off('notification:new');
+      socket.off('notification:delete');
+    };
+  }, [socket]);
+
+  const fetchData = async () => {
+    if (loading || !user?.id) return;
+    try {
+      setLoading(true);
+      setError(null);
+
+      const tasksRes = await fetchWithAuth(`/api/task?action=getAll&assigneeId=${user?.id}`);
+      if (!tasksRes.ok) throw new Error('Failed to fetch tasks');
+
+      const tasksData = await tasksRes.json();
+
+      setTasks(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        tasksData.map((task: any) => ({
+          id: task._id,
+          title: task.title,
+          description: task.description,
+          status: task.status,
+          dueDate: task.dueDate,
+        }))
+      );
+    } catch {
+      setError('An unexpected error occurred');
+    } finally {
       setLoading(false);
-    }, 800);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (loading) return <p className="mt-10 text-center">Loading your tasks...</p>;
@@ -74,7 +124,7 @@ export default function UserDashboard() {
           </Button>
         </Link>
         <div className="ml-5">
-          <NotificationMenu notifications={[]} />
+          <NotificationMenu notifications={notifications} />
         </div>
         <Button
           size="icon"
