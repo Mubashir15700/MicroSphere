@@ -6,7 +6,8 @@ async function handleGetAllTasks(req: NextApiRequest, res: NextApiResponse, toke
   if (req.method === 'GET') {
     try {
       const axiosInstance = createAxiosInstance(token);
-      const response = await axiosInstance.get('/tasks');
+      const url = req.query.assigneeId ? `/tasks/user/${req.query.assigneeId}` : '/tasks';
+      const response = await axiosInstance.get(url);
       return res.status(response.status).json(response.data);
     } catch (error: unknown) {
       return handleAxiosError(error, res);

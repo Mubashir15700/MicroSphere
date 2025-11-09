@@ -1,11 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-
-// Assuming you have a user context or auth info
-const currentUserId = 'user123'; // Replace with actual current logged-in user ID from your auth context
+import { useTasksStore } from '@/store/tasksStore';
+import { fetchWithAuth } from '@/lib/fetchClient';
+import { useAuthStore } from '@/store/authStore';
 
 interface Task {
   id: string;
@@ -18,8 +18,9 @@ interface Task {
 
 export default function TaskDetailsPage() {
   const params = useParams();
-  const router = useRouter();
-  const { taskId } = params;
+
+  const { tasks, updateTask } = useTasksStore();
+  const { user } = useAuthStore((s) => s);
 
   const [task, setTask] = useState<Task | null>(null);
   const [loading, setLoading] = useState(true);
@@ -28,33 +29,64 @@ export default function TaskDetailsPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    setLoading(true);
-    // Replace this with your API call to fetch task by ID
-    setTimeout(() => {
+    if (!params?.taskId) return;
+    const task = tasks.find((t) => t.id === params?.taskId);
+
+    if (task) {
       setTask({
-        id: taskId! as string,
-        title: 'Sample Task',
-        description: 'This is a detailed description of the task.',
-        status: 'pending',
-        dueDate: '2025-09-30',
-        assigneeId: undefined, // For testing unassigned task
+        title: task.title,
+        description: task.description,
+        dueDate: task.dueDate,
+        status: task.status,
+        id: task.id,
+        assigneeId: task.assigneeId,
       });
       setLoading(false);
-    }, 700);
-  }, [taskId]);
+      return;
+    } else {
+      fetchWithAuth(`/api/task?action=getById&id=${params.taskId}`)
+        .then((res) => res.json())
+        .then((data) => {
+          setTask(data);
+          setLoading(false);
+        })
+        .catch(() => setLoading(false));
+    }
+  }, [params?.taskId, tasks]);
 
   if (loading) return <p className="mt-10 text-center">Loading task details...</p>;
   if (!task) return <p className="mt-10 text-center text-red-600">Task not found</p>;
 
   const handleStatusChange = async (newStatus: Task['status']) => {
-    setUpdatingStatus(true);
-    setError(null);
     try {
-      // Replace with your API call to update status
-      await new Promise((res) => setTimeout(res, 800));
-      setTask({ ...task, status: newStatus });
-    } catch {
-      setError('Failed to update status');
+      setUpdatingStatus(true);
+      setError(null);
+
+      const payload = {
+        status: newStatus,
+      };
+
+      const response = await fetchWithAuth(`/api/task?action=update&id=${params?.taskId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        setError(result?.data?.message || result?.message || 'Failed to update task');
+        return;
+      }
+
+      if (result.task) {
+        updateTask(result.task);
+      }
+    } catch (err) {
+      console.error('Error updating task:', err);
+      setError('Something went wrong. Please try again.');
     } finally {
       setUpdatingStatus(false);
     }
@@ -67,7 +99,7 @@ export default function TaskDetailsPage() {
       // Replace with your API call to request assignment
       // For demo, we just assign currentUserId immediately
       await new Promise((res) => setTimeout(res, 800));
-      setTask({ ...task, assigneeId: currentUserId });
+      setTask({ ...task, assigneeId: user?.id });
     } catch {
       setError('Failed to request assignment');
     } finally {
@@ -75,7 +107,7 @@ export default function TaskDetailsPage() {
     }
   };
 
-  const isAssignedToCurrentUser = task.assigneeId === currentUserId;
+  const isAssignedToCurrentUser = task.assigneeId === user?.id;
 
   return (
     <div className="mx-auto mt-10 max-w-3xl rounded-md bg-white p-6 shadow-md dark:bg-gray-800">
@@ -92,37 +124,25 @@ export default function TaskDetailsPage() {
 
       {task.assigneeId ? (
         <p className="mb-6 text-gray-600 dark:text-gray-400">
-          <strong>Assignee ID:</strong> {task.assigneeId}
+          <strong>Assignee:</strong>{' '}
+          {task.assigneeId === user?.id ? user?.name + '(You)' : task.assigneeId}
         </p>
       ) : (
         <p className="mb-6 text-gray-600 italic dark:text-gray-400">No assignee yet</p>
       )}
 
       <div className="mb-4 space-x-2">
-        <Button
-          onClick={() => handleStatusChange('pending')}
-          disabled={updatingStatus || task.status === 'pending' || !isAssignedToCurrentUser}
-          variant={task.status === 'pending' ? 'default' : 'outline'}
-          size="sm"
-        >
-          Pending
-        </Button>
-        <Button
-          onClick={() => handleStatusChange('in-progress')}
-          disabled={updatingStatus || task.status === 'in-progress' || !isAssignedToCurrentUser}
-          variant={task.status === 'in-progress' ? 'default' : 'outline'}
-          size="sm"
-        >
-          In Progress
-        </Button>
-        <Button
-          onClick={() => handleStatusChange('completed')}
-          disabled={updatingStatus || task.status === 'completed' || !isAssignedToCurrentUser}
-          variant={task.status === 'completed' ? 'default' : 'outline'}
-          size="sm"
-        >
-          Completed
-        </Button>
+        {['pending', 'in-progress', 'completed'].map((status) => (
+          <Button
+            key={status}
+            onClick={() => handleStatusChange(status as Task['status'])}
+            disabled={updatingStatus || task.status === status || !isAssignedToCurrentUser}
+            variant={task.status === status ? 'default' : 'outline'}
+            size="sm"
+          >
+            {status.toLocaleUpperCase()}
+          </Button>
+        ))}
       </div>
 
       {/* Show request assignment button only if task has no assignee */}

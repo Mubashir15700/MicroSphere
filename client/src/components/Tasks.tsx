@@ -16,7 +16,7 @@ interface TasksProps {
   tasks: Task[];
   isAdmin?: boolean;
   onDelete?: (taskId: string, userName: string) => void;
-  deleting: string | null;
+  deleting?: string | null;
 }
 
 export default function Tasks({ tasks, isAdmin = false, onDelete, deleting }: TasksProps) {
