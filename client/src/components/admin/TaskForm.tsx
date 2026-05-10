@@ -88,6 +88,7 @@ export default function TaskForm({
       if (response.ok) {
         const data = await response.json();
         useUsersStore.setState({
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           users: data.map((user: any) => ({
             id: user._id,
             name: user.name,
