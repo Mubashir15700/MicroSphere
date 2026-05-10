@@ -6,7 +6,7 @@ export const initSocket = (userId: string) => {
   if (typeof window === 'undefined') return null; // SSR guard
 
   if (!socket) {
-    socket = io(process.env.NEXT_PUBLIC_NOTIFICATION_SERVICE_URL, {
+    socket = io(process.env.NEXT_PUBLIC_NOTIFICATION_WS, {
       transports: ['websocket'],
       autoConnect: false,
     });

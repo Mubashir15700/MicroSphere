@@ -73,13 +73,15 @@ export default function UserProfilePage() {
   };
 
   return (
-    <ProfileForm
-      profile={profile}
-      onProfileChange={setProfile}
-      onSave={handleSave}
-      loading={loading}
-      saving={saving}
-      error={error}
-    />
+    <div className="flex min-h-screen items-center justify-center">
+      <ProfileForm
+        profile={profile}
+        onProfileChange={setProfile}
+        onSave={handleSave}
+        loading={loading}
+        saving={saving}
+        error={error}
+      />
+    </div>
   );
 }

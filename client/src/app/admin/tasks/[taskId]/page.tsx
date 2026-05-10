@@ -4,6 +4,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { ScreenMessage } from '@/components/ScreenMessage';
 import { fetchWithAuth } from '@/lib/fetchClient';
 import { useTasksStore } from '@/store/tasksStore';
 
@@ -73,8 +74,13 @@ export default function AdminTaskDetailsPage() {
     }
   };
 
-  if (loading) return <p className="mt-10 text-center">Loading task details...</p>;
-  if (!task) return <p className="mt-10 text-center">Task not found.</p>;
+  if (loading) {
+    return <ScreenMessage message="Loading task details..." />;
+  }
+
+  if (!task) {
+    return <ScreenMessage message={'Task not found.'} type="error" />;
+  }
 
   return (
     <div className="mx-auto mt-10 max-w-3xl rounded-md bg-white p-6 shadow-md dark:bg-gray-800">

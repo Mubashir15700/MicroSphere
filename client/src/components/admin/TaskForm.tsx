@@ -87,7 +87,15 @@ export default function TaskForm({
 
       if (response.ok) {
         const data = await response.json();
-        useUsersStore.setState({ users: data });
+        useUsersStore.setState({
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          users: data.map((user: any) => ({
+            id: user._id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+          })),
+        });
       } else {
         console.error('Failed to fetch users');
         setError('Failed to fetch users');
@@ -168,7 +176,7 @@ export default function TaskForm({
               .filter((user) => user.role === 'user')
               .map((user) => (
                 // eslint-disable-next-line
-                <SelectItem key={(user as any)._id} value={(user as any)._id}>
+                <SelectItem key={(user as any).id} value={(user as any).id}>
                   {user.name}
                 </SelectItem>
               ))}
