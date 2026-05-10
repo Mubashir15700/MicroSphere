@@ -21,7 +21,13 @@ interface TasksProps {
   deleting?: string | null;
 }
 
-export default function Tasks({ tasks, isAdmin = false, currentUserId, onDelete, deleting }: TasksProps) {
+export default function Tasks({
+  tasks,
+  isAdmin = false,
+  currentUserId,
+  onDelete,
+  deleting,
+}: TasksProps) {
   if (tasks.length === 0) {
     return <ScreenMessage message="No tasks found." />;
   }
@@ -43,18 +49,12 @@ export default function Tasks({ tasks, isAdmin = false, currentUserId, onDelete,
             </p>
             {task.assigneeId ? (
               task.assigneeId === currentUserId ? (
-                <p className="text-sm text-green-600">
-                  Assigned to you
-                </p>
+                <p className="text-sm text-green-600">Assigned to you</p>
               ) : (
-                <p className="text-sm text-blue-600">
-                  Assigned to another user
-                </p>
+                <p className="text-sm text-blue-600">Assigned to another user</p>
               )
             ) : (
-              <p className="text-sm text-gray-500">
-                Unassigned
-              </p>
+              <p className="text-sm text-gray-500">Unassigned</p>
             )}
           </div>
 

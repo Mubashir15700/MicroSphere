@@ -132,12 +132,13 @@ export default function TaskDetailsPage() {
             </div>
 
             <span
-              className={`inline-flex w-fit items-center rounded-full px-4 py-1 text-sm font-semibold capitalize ${task.status === 'completed'
+              className={`inline-flex w-fit items-center rounded-full px-4 py-1 text-sm font-semibold capitalize ${
+                task.status === 'completed'
                   ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300'
                   : task.status === 'in-progress'
                     ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300'
                     : 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
-                }`}
+              }`}
             >
               {task.status.replace('-', ' ')}
             </span>
@@ -149,9 +150,7 @@ export default function TaskDetailsPage() {
           {/* Info Cards */}
           <div className="grid gap-4 md:grid-cols-2">
             <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900">
-              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                Due Date
-              </p>
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Due Date</p>
 
               <p className="mt-1 text-lg font-semibold text-gray-900 dark:text-white">
                 {new Date(task.dueDate).toLocaleDateString()}
@@ -159,9 +158,7 @@ export default function TaskDetailsPage() {
             </div>
 
             <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900">
-              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                Assignee
-              </p>
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Assignee</p>
 
               <p className="mt-1 text-lg font-semibold text-gray-900 dark:text-white">
                 {task.assigneeId
@@ -175,7 +172,7 @@ export default function TaskDetailsPage() {
 
           {/* Status Actions */}
           <div>
-            <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+            <h2 className="mb-3 text-sm font-semibold tracking-wide text-gray-500 uppercase dark:text-gray-400">
               {isAssignedToCurrentUser ? 'Update Task Status' : 'Task Status'}
             </h2>
 
@@ -184,11 +181,7 @@ export default function TaskDetailsPage() {
                 <Button
                   key={status}
                   onClick={() => handleStatusChange(status as Task['status'])}
-                  disabled={
-                    updatingStatus ||
-                    task.status === status ||
-                    !isAssignedToCurrentUser
-                  }
+                  disabled={updatingStatus || task.status === status || !isAssignedToCurrentUser}
                   variant={task.status === status ? 'default' : 'outline'}
                   size="sm"
                   className="rounded-full px-5"

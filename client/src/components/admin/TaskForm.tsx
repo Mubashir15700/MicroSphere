@@ -94,7 +94,7 @@ export default function TaskForm({
             name: user.name,
             email: user.email,
             role: user.role,
-          }))
+          })),
         });
       } else {
         console.error('Failed to fetch users');

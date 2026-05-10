@@ -73,7 +73,7 @@ export default function AdminProfilePage() {
   };
 
   return (
-    <div className='flex justify-center items-center min-h-5/6'>
+    <div className="flex min-h-5/6 items-center justify-center">
       <ProfileForm
         profile={profile}
         onProfileChange={setProfile}

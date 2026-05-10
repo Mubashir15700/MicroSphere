@@ -117,7 +117,7 @@ export default function UserDashboard() {
   }
 
   return (
-    <div className="h-screen p-5 overflow-hidden bg-gray-100 dark:bg-gray-900">
+    <div className="h-screen overflow-hidden bg-gray-100 p-5 dark:bg-gray-900">
       <div className="mx-auto flex h-full w-full flex-col rounded-md bg-white p-6 shadow-md dark:bg-gray-800">
         {/* Navigator buttons */}
         <div className="mb-6 flex justify-end">
@@ -148,17 +148,13 @@ export default function UserDashboard() {
           </Button>
         </div>
 
-        <h1 className="mb-6 text-3xl font-bold text-gray-900 dark:text-white">
-          Your Tasks
-        </h1>
+        <h1 className="mb-6 text-3xl font-bold text-gray-900 dark:text-white">Your Tasks</h1>
 
         {/* Scrollable task list */}
         <div className="flex-1 overflow-y-auto">
           {tasks.length === 0 ? (
             <div className="flex h-full items-center justify-center">
-              <p className="text-center text-gray-700 dark:text-gray-300">
-                No tasks assigned yet.
-              </p>
+              <p className="text-center text-gray-700 dark:text-gray-300">No tasks assigned yet.</p>
             </div>
           ) : (
             <ul className="space-y-4">

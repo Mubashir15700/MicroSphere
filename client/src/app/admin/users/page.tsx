@@ -135,8 +135,8 @@ export default function AdminUsersPage() {
               </li>
             ))}
           </ul>
-          </div>
-      )}
         </div>
-      );
+      )}
+    </div>
+  );
 }

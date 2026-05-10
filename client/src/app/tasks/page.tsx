@@ -58,8 +58,7 @@ export default function UserTasksPage() {
 
   return (
     <div className="h-screen overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200 p-4 dark:from-gray-900 dark:to-gray-950">
-      <div className="mx-auto flex h-full w-full p-6 flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white/80 shadow-2xl backdrop-blur-sm dark:border-gray-700 dark:bg-gray-800/80">
-
+      <div className="mx-auto flex h-full w-full flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white/80 p-6 shadow-2xl backdrop-blur-sm dark:border-gray-700 dark:bg-gray-800/80">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-gray-200 px-8 py-6 dark:border-gray-700">
           <div>
@@ -100,9 +99,7 @@ export default function UserTasksPage() {
                 </svg>
               </div>
 
-              <h2 className="text-xl font-semibold text-gray-800 dark:text-white">
-                No Tasks Yet
-              </h2>
+              <h2 className="text-xl font-semibold text-gray-800 dark:text-white">No Tasks Yet</h2>
 
               <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
                 There are currently no tasks to display.

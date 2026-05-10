@@ -75,7 +75,7 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="max-h-[85vh] overflow-y-auto space-y-10 rounded-md bg-white p-6 shadow-md dark:bg-gray-800">
+    <div className="max-h-[85vh] space-y-10 overflow-y-auto rounded-md bg-white p-6 shadow-md dark:bg-gray-800">
       <h1 className="text-4xl font-bold text-gray-900 dark:text-white">Admin Dashboard</h1>
 
       {/* Summary Section */}
