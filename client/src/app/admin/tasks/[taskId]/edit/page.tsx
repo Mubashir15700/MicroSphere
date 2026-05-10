@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import TaskForm, { TaskFormData } from '@/components/admin/TaskForm';
+import { ScreenMessage } from '@/components/ScreenMessage';
 import { fetchWithAuth } from '@/lib/fetchClient';
 import { useTasksStore } from '@/store/tasksStore';
 
@@ -90,8 +91,13 @@ export default function EditTaskPage({ params }: PageProps) {
     }
   };
 
-  if (loading) return <p className="mt-10 text-center">Loading task...</p>;
-  if (!task) return <p className="mt-10 text-center">Task not found.</p>;
+  if (loading) {
+    return <ScreenMessage message="Loading task..." />;
+  }
+
+  if (!task) {
+    return <ScreenMessage message={'Task not found.'} type="error" />;
+  }
 
   return (
     <div className="mx-auto mt-10 max-w-2xl rounded-md bg-white p-6 shadow-md dark:bg-gray-800">

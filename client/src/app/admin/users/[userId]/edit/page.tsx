@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import UserForm, { UserFormData } from '@/components/admin/UserForm';
+import { ScreenMessage } from '@/components/ScreenMessage';
 import { fetchWithAuth } from '@/lib/fetchClient';
 import { useUsersStore } from '@/store/usersStore';
 
@@ -81,8 +82,13 @@ export default function EditUserPage() {
     }
   };
 
-  if (loading) return <p className="mt-10 text-center">Loading user...</p>;
-  if (!user) return <p className="mt-10 text-center text-red-600">User not found.</p>;
+  if (loading) {
+    return <ScreenMessage message="Loading user..." />;
+  }
+
+  if (!user) {
+    return <ScreenMessage message={'User not found.'} type="error" />;
+  }
 
   return (
     <div className="mx-auto mt-10 max-w-2xl rounded-md bg-white p-6 shadow-md dark:bg-gray-800">

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
+import { ScreenMessage } from '@/components/ScreenMessage';
 import { useTasksStore } from '@/store/tasksStore';
 import { fetchWithAuth } from '@/lib/fetchClient';
 import { useAuthStore } from '@/store/authStore';
@@ -25,7 +26,7 @@ export default function TaskDetailsPage() {
   const [task, setTask] = useState<Task | null>(null);
   const [loading, setLoading] = useState(true);
   const [updatingStatus, setUpdatingStatus] = useState(false);
-  const [assigning, setAssigning] = useState(false);
+  const [requestingAssign, setRequestingAssign] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -54,8 +55,13 @@ export default function TaskDetailsPage() {
     }
   }, [params?.taskId, tasks]);
 
-  if (loading) return <p className="mt-10 text-center">Loading task details...</p>;
-  if (!task) return <p className="mt-10 text-center text-red-600">Task not found</p>;
+  if (loading) {
+    return <ScreenMessage message="Loading task details..." />;
+  }
+
+  if (!task) {
+    return <ScreenMessage message={'Task not found'} type="error" />;
+  }
 
   const handleStatusChange = async (newStatus: Task['status']) => {
     try {
@@ -93,7 +99,7 @@ export default function TaskDetailsPage() {
   };
 
   const handleRequestAssign = async () => {
-    setAssigning(true);
+    setRequestingAssign(true);
     setError(null);
     try {
       // Replace with your API call to request assignment
@@ -103,62 +109,131 @@ export default function TaskDetailsPage() {
     } catch {
       setError('Failed to request assignment');
     } finally {
-      setAssigning(false);
+      setRequestingAssign(false);
     }
   };
 
   const isAssignedToCurrentUser = task.assigneeId === user?.id;
 
   return (
-    <div className="mx-auto mt-10 max-w-3xl rounded-md bg-white p-6 shadow-md dark:bg-gray-800">
-      <h1 className="mb-4 text-3xl font-bold text-gray-900 dark:text-white">{task.title}</h1>
-      <p className="mb-4 text-gray-700 dark:text-gray-300">{task.description}</p>
+    <div className="mx-auto mt-10 max-w-4xl px-4">
+      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-xl transition-all dark:border-gray-700 dark:bg-gray-800">
+        {/* Header */}
+        <div className="border-b border-gray-200 bg-gray-50 px-8 py-6 dark:border-gray-700 dark:bg-gray-900">
+          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
+                {task.title}
+              </h1>
 
-      <p className="mb-1 text-gray-600 dark:text-gray-400">
-        <strong>Status:</strong> <span className="capitalize">{task.status}</span>
-      </p>
+              <p className="mt-3 max-w-2xl leading-relaxed text-gray-600 dark:text-gray-300">
+                {task.description}
+              </p>
+            </div>
 
-      <p className="mb-4 text-gray-600 dark:text-gray-400">
-        <strong>Due Date:</strong> {new Date(task.dueDate).toLocaleDateString()}
-      </p>
+            <span
+              className={`inline-flex w-fit items-center rounded-full px-4 py-1 text-sm font-semibold capitalize ${task.status === 'completed'
+                  ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300'
+                  : task.status === 'in-progress'
+                    ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300'
+                    : 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
+                }`}
+            >
+              {task.status.replace('-', ' ')}
+            </span>
+          </div>
+        </div>
 
-      {task.assigneeId ? (
-        <p className="mb-6 text-gray-600 dark:text-gray-400">
-          <strong>Assignee:</strong>{' '}
-          {task.assigneeId === user?.id ? user?.name + '(You)' : task.assigneeId}
-        </p>
-      ) : (
-        <p className="mb-6 text-gray-600 italic dark:text-gray-400">No assignee yet</p>
-      )}
+        {/* Content */}
+        <div className="space-y-6 px-8 py-6">
+          {/* Info Cards */}
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900">
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                Due Date
+              </p>
 
-      <div className="mb-4 space-x-2">
-        {['pending', 'in-progress', 'completed'].map((status) => (
-          <Button
-            key={status}
-            onClick={() => handleStatusChange(status as Task['status'])}
-            disabled={updatingStatus || task.status === status || !isAssignedToCurrentUser}
-            variant={task.status === status ? 'default' : 'outline'}
-            size="sm"
-          >
-            {status.toLocaleUpperCase()}
-          </Button>
-        ))}
+              <p className="mt-1 text-lg font-semibold text-gray-900 dark:text-white">
+                {new Date(task.dueDate).toLocaleDateString()}
+              </p>
+            </div>
+
+            <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900">
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                Assignee
+              </p>
+
+              <p className="mt-1 text-lg font-semibold text-gray-900 dark:text-white">
+                {task.assigneeId
+                  ? task.assigneeId === user?.id
+                    ? `${user?.name} (You)`
+                    : task.assigneeId
+                  : 'No assignee yet'}
+              </p>
+            </div>
+          </div>
+
+          {/* Status Actions */}
+          <div>
+            <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+              {isAssignedToCurrentUser ? 'Update Task Status' : 'Task Status'}
+            </h2>
+
+            <div className="flex flex-wrap gap-3">
+              {['pending', 'in-progress', 'completed'].map((status) => (
+                <Button
+                  key={status}
+                  onClick={() => handleStatusChange(status as Task['status'])}
+                  disabled={
+                    updatingStatus ||
+                    task.status === status ||
+                    !isAssignedToCurrentUser
+                  }
+                  variant={task.status === status ? 'default' : 'outline'}
+                  size="sm"
+                  className="rounded-full px-5"
+                >
+                  {status.replace('-', ' ').toUpperCase()}
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          {/* Assignment */}
+          {!isAssignedToCurrentUser && (
+            <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 p-5 dark:border-gray-600 dark:bg-gray-900">
+              <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <h3 className="font-semibold text-gray-900 dark:text-white">
+                    Task Not Assigned to You
+                  </h3>
+
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Request assignment to start working on this task.
+                  </p>
+                </div>
+
+                <Button
+                  onClick={handleRequestAssign}
+                  disabled={requestingAssign}
+                  variant="secondary"
+                  size="sm"
+                  className="rounded-full px-5"
+                >
+                  {requestingAssign ? 'Requesting...' : 'Request Assignment'}
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Error Message */}
+          {error && (
+            <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-300">
+              {error}
+            </div>
+          )}
+        </div>
       </div>
-
-      {/* Show request assignment button only if task has no assignee */}
-      {!task.assigneeId && (
-        <Button
-          onClick={handleRequestAssign}
-          disabled={assigning}
-          variant="secondary"
-          size="sm"
-          className="mb-4"
-        >
-          {assigning ? 'Requesting...' : 'Request Assignment'}
-        </Button>
-      )}
-
-      {error && <p className="mb-4 text-red-600 dark:text-red-400">{error}</p>}
     </div>
   );
 }

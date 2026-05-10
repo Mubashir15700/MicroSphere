@@ -2,6 +2,7 @@
 
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { ScreenMessage } from './ScreenMessage';
 
 interface UserProfile {
   id: string;
@@ -27,10 +28,10 @@ export default function ProfileForm({
   loading,
   error = null,
 }: ProfileFormProps) {
-  if (loading) return <p className="mt-10 text-center">Loading profile...</p>;
+  if (loading) return <ScreenMessage message="Loading profile..." />;
 
   return (
-    <div className="mx-auto mt-10 max-w-md rounded-md bg-white p-6 shadow-md dark:bg-gray-800">
+    <div className="mx-auto w-full max-w-md rounded-md bg-white p-6 shadow-md dark:bg-gray-800">
       <h1 className="mb-6 text-2xl font-semibold text-gray-900 dark:text-white">Profile</h1>
       <div className="space-y-4">
         <div>

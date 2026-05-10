@@ -73,13 +73,15 @@ export default function AdminProfilePage() {
   };
 
   return (
-    <ProfileForm
-      profile={profile}
-      onProfileChange={setProfile}
-      onSave={handleSave}
-      loading={loading}
-      saving={saving}
-      error={error}
-    />
+    <div className='flex justify-center items-center min-h-5/6'>
+      <ProfileForm
+        profile={profile}
+        onProfileChange={setProfile}
+        onSave={handleSave}
+        loading={loading}
+        saving={saving}
+        error={error}
+      />
+    </div>
   );
 }

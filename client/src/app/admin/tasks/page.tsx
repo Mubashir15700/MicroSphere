@@ -77,7 +77,7 @@ export default function UserTasksPage() {
   }, [tasksStore.tasks, tasksStore.tasks.length]);
 
   return (
-    <div className="p-6">
+    <div className="p-1">
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-3xl font-bold">Tasks</h1>
         <Link href="/admin/tasks/create">
@@ -89,12 +89,14 @@ export default function UserTasksPage() {
       {error && <p className="text-red-500">Error: {error}</p>}
 
       {!loading && !error && (
-        <Tasks
-          tasks={tasks}
-          isAdmin={true}
-          onDelete={(taskId: string, taskName: string) => deleteTask(taskId, taskName)}
-          deleting={deleting}
-        />
+        <div className="max-h-[85vh] overflow-y-auto">
+          <Tasks
+            tasks={tasks}
+            isAdmin={true}
+            onDelete={(taskId: string, taskName: string) => deleteTask(taskId, taskName)}
+            deleting={deleting}
+          />
+        </div>
       )}
     </div>
   );

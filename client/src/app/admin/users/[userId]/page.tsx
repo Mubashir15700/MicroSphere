@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { useUsersStore } from '@/store/usersStore';
 import UserForm, { UserFormData } from '@/components/admin/UserForm';
+import { ScreenMessage } from '@/components/ScreenMessage';
 import { fetchWithAuth } from '@/lib/fetchClient';
 
 export default function AdminUserDetailPage() {
@@ -38,11 +39,11 @@ export default function AdminUserDetailPage() {
   }, [params?.userId, users]);
 
   if (loading) {
-    return <p className="mt-10 text-center">Loading user details...</p>;
+    return <ScreenMessage message="Loading user details..." />;
   }
 
   if (!user) {
-    return <p className="mt-10 text-center text-red-600">User not found.</p>;
+    return <ScreenMessage message={'User not found.'} type="error" />;
   }
 
   return (

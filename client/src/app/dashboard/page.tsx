@@ -7,6 +7,7 @@ import { User, LogOut } from 'lucide-react'; // Import the icon
 import { useAuthStore } from '@/store/authStore';
 import { Button } from '@/components/ui/button';
 import { NotificationMenu } from '@/components/NotificationMenu';
+import { ScreenMessage } from '@/components/ScreenMessage';
 import { fetchWithAuth } from '@/lib/fetchClient';
 import { useTasksStore } from '@/store/tasksStore';
 import { useSocket } from '@/contexts/SocketProvider';
@@ -92,6 +93,7 @@ export default function UserDashboard() {
           description: task.description,
           status: task.status,
           dueDate: task.dueDate,
+          assigneeId: task.assigneeId,
         }))
       );
     } catch {
@@ -106,66 +108,88 @@ export default function UserDashboard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  if (loading) return <p className="mt-10 text-center">Loading your tasks...</p>;
-  if (error) return <p className="mt-10 text-center text-red-600">{error}</p>;
+  if (loading) {
+    return <ScreenMessage message="Loading your tasks..." />;
+  }
+
+  if (error) {
+    return <ScreenMessage message={error} type="error" />;
+  }
 
   return (
-    <div className="mx-auto mt-10 max-w-3xl rounded-md bg-white p-6 shadow-md dark:bg-gray-800">
-      {/* Navigator buttons */}
-      <div className="mb-6 flex justify-end">
-        <Link href="/tasks">
-          <Button size="sm" variant="outline">
-            All Tasks
+    <div className="h-screen p-5 overflow-hidden bg-gray-100 dark:bg-gray-900">
+      <div className="mx-auto flex h-full w-full flex-col rounded-md bg-white p-6 shadow-md dark:bg-gray-800">
+        {/* Navigator buttons */}
+        <div className="mb-6 flex justify-end">
+          <Link href="/tasks">
+            <Button size="sm" variant="outline">
+              All Tasks
+            </Button>
+          </Link>
+
+          <Link href="/profile" className="ml-5">
+            <Button size="icon" variant="outline">
+              <User className="h-8 w-8 text-gray-600 dark:text-gray-300" />
+            </Button>
+          </Link>
+
+          <div className="ml-5">
+            <NotificationMenu notifications={notifications} />
+          </div>
+
+          <Button
+            size="icon"
+            variant="outline"
+            className="ml-5 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-600"
+            onClick={handleLogout}
+            type="button"
+          >
+            <LogOut className="h-8 w-8" />
           </Button>
-        </Link>
-        <Link href="/profile" className="ml-5">
-          <Button size="icon" variant="outline">
-            <User className="h-8 w-8 text-gray-600 dark:text-gray-300" />
-          </Button>
-        </Link>
-        <div className="ml-5">
-          <NotificationMenu notifications={notifications} />
         </div>
-        <Button
-          size="icon"
-          variant="outline"
-          className="ml-5 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-600"
-          onClick={handleLogout}
-          type="button"
-        >
-          <LogOut className="h-8 w-8" />
-        </Button>
+
+        <h1 className="mb-6 text-3xl font-bold text-gray-900 dark:text-white">
+          Your Tasks
+        </h1>
+
+        {/* Scrollable task list */}
+        <div className="flex-1 overflow-y-auto">
+          {tasks.length === 0 ? (
+            <div className="flex h-full items-center justify-center">
+              <p className="text-center text-gray-700 dark:text-gray-300">
+                No tasks assigned yet.
+              </p>
+            </div>
+          ) : (
+            <ul className="space-y-4">
+              {tasks.map((task) => (
+                <li
+                  key={task.id}
+                  className="flex items-center justify-between rounded-md border border-gray-300 p-4 dark:border-gray-700"
+                >
+                  <div>
+                    <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                      {task.title}
+                    </h2>
+
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Status: <span className="capitalize">{task.status}</span>
+                    </p>
+
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Due: {new Date(task.dueDate).toLocaleDateString()}
+                    </p>
+                  </div>
+
+                  <Link href={`/tasks/${task.id}`}>
+                    <Button size="sm">View</Button>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </div>
-
-      <h1 className="mb-6 text-3xl font-bold text-gray-900 dark:text-white">Your Tasks</h1>
-
-      {tasks.length === 0 ? (
-        <p className="text-center text-gray-700 dark:text-gray-300">No tasks assigned yet.</p>
-      ) : (
-        <ul className="space-y-4">
-          {tasks.map((task) => (
-            <li
-              key={task.id}
-              className="flex items-center justify-between rounded-md border border-gray-300 p-4 dark:border-gray-700"
-            >
-              <div>
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                  {task.title}
-                </h2>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Status: <span className="capitalize">{task.status}</span>
-                </p>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Due: {new Date(task.dueDate).toLocaleDateString()}
-                </p>
-              </div>
-              <Link href={`/tasks/${task.id}`}>
-                <Button size="sm">View</Button>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      )}
     </div>
   );
 }

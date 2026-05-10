@@ -134,7 +134,7 @@ export default function AdminShell({ children }: AdminShellProps) {
       {/* Sidebar */}
       <aside className="flex w-64 flex-col border-r border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
         <div className="flex h-16 items-center justify-center border-b border-gray-200 text-lg font-bold text-gray-900 dark:border-gray-700 dark:text-white">
-          Admin Panel
+          MicroSphere
         </div>
 
         <nav className="mt-4 flex flex-col space-y-1 px-2">

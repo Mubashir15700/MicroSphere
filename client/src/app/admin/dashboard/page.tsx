@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { ScreenMessage } from '@/components/ScreenMessage';
 import { useUsersStore } from '@/store/usersStore';
 import { useTasksStore } from '@/store/tasksStore';
 import { fetchWithAuth } from '@/lib/fetchClient';
@@ -40,6 +41,7 @@ export default function AdminDashboard() {
             id: user._id,
             name: user.name,
             email: user.email,
+            role: user.role,
           }))
       );
       tasksStore.setTasks(
@@ -64,11 +66,16 @@ export default function AdminDashboard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  if (loading) return <p className="mt-10 text-center">Loading dashboard...</p>;
-  if (error) return <p className="mt-10 text-center text-red-600">{error}</p>;
+  if (loading) {
+    return <ScreenMessage message="Loading dashboard..." />;
+  }
+
+  if (error) {
+    return <ScreenMessage message={error} type="error" />;
+  }
 
   return (
-    <div className="mx-auto mt-10 max-w-5xl space-y-10 rounded-md bg-white p-6 shadow-md dark:bg-gray-800">
+    <div className="max-h-[85vh] overflow-y-auto space-y-10 rounded-md bg-white p-6 shadow-md dark:bg-gray-800">
       <h1 className="text-4xl font-bold text-gray-900 dark:text-white">Admin Dashboard</h1>
 
       {/* Summary Section */}
